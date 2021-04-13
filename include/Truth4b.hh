@@ -11,6 +11,7 @@
 
 #include "TTree.h"
 #include "TFile.h"
+#include "TLorentzVector.h"
 
 
 class TTree;
@@ -87,6 +88,10 @@ protected:
     float h1Px;
     float h1Py;
     float h1Pz;
+    TLorentzVector v1;
+    TLorentzVector v2;
+    TLorentzVector v3;
+    TLorentzVector v4;
 
 };
 

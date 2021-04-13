@@ -106,6 +106,7 @@ void Truth4b::processEvent( LCEvent *evtP ) {
                     pdgid = simP->getPDG();
                     if ( h1count == 2 ) break;
                     if ( pdgid == 9999992 ) {
+                        // scan h1
                         h1count++;
                         MCParticleVec h1Daughters = simP->getDaughters();
                         // init vars
@@ -115,32 +116,49 @@ void Truth4b::processEvent( LCEvent *evtP ) {
                         h1Py = 0;
                         h1Pz = 0;
                         for (MCParticleVec::iterator itr = h1Daughters.begin(); itr != h1Daughters.end(); itr++) {
+                            // scan decay products
+                            bcount++;
                             switch ( bcount ) {
-                                case 0 :
+                                case 1 :
                                     _mass1 = (*itr)->getMass();
                                     _E1 = (*itr)->getEnergy();
-                                    break;
-
-                                case 1 :
-                                    _mass2 = (*itr)->getMass();
-                                    _E2 = (*itr)->getEnergy();
+                                    v1.SetPxPyPzE( (*itr)->getMomentum()[0],
+                                                   (*itr)->getMomentum()[1],
+                                                   (*itr)->getMomentum()[2],
+                                                   (*itr)->getEnergy() );
                                     break;
 
                                 case 2 :
-                                    _mass3 = (*itr)->getMass();
-                                    _E3 = (*itr)->getEnergy();
+                                    _mass2 = (*itr)->getMass();
+                                    _E2 = (*itr)->getEnergy();
+                                    v2.SetPxPyPzE( (*itr)->getMomentum()[0],
+                                                   (*itr)->getMomentum()[1],
+                                                   (*itr)->getMomentum()[2],
+                                                   (*itr)->getEnergy() );
                                     break;
 
                                 case 3 :
+                                    _mass3 = (*itr)->getMass();
+                                    _E3 = (*itr)->getEnergy();
+                                    v3.SetPxPyPzE( (*itr)->getMomentum()[0],
+                                                   (*itr)->getMomentum()[1],
+                                                   (*itr)->getMomentum()[2],
+                                                   (*itr)->getEnergy() );
+                                    break;
+
+                                case 4 :
                                     _mass4 = (*itr)->getMass();
                                     _E4 = (*itr)->getEnergy();
+                                    v4.SetPxPyPzE( (*itr)->getMomentum()[0],
+                                                   (*itr)->getMomentum()[1],
+                                                   (*itr)->getMomentum()[2],
+                                                   (*itr)->getEnergy() );
                                     break;
 
                                 default :
                                     break;
                             }
-                            bcount++;
-                            // calculate h1
+                            // sum up h1 Energy
                             switch ( h1count ) {
                                 case 1 : 
                                     _h1E1 += (*itr)->getEnergy();
@@ -160,15 +178,17 @@ void Truth4b::processEvent( LCEvent *evtP ) {
                             h2Py += (*itr)->getMomentum()[1];
                             h2Pz += (*itr)->getMomentum()[2];
                         }
-                        // calculate h1
+                        // calculate h1 
                         switch ( h1count ) {
                             case 1 :
                                 _h1Psqr1 = h1Px * h1Px + h1Py * h1Py + h1Pz * h1Pz;
                                 _h1InvMass1 = sqrt(_h1E1 * _h1E1 - _h1Psqr1);
+                                _deltaR1 = v1.DeltaR(v2);
                                 break;
                             case 2 :
                                 _h1Psqr2 = h1Px * h1Px + h1Py * h1Py + h1Pz * h1Pz;
                                 _h1InvMass2 = sqrt(_h1E2 * _h1E2 - _h1Psqr2);
+                                _deltaR2 = v3.DeltaR(v4);
                                 break;
                             default :
                                 break;
