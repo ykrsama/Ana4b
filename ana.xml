@@ -1,0 +1,30 @@
+<marlin>
+    <execute>
+        <processor name="MyAna4b"/>
+    </execute>
+
+    <global>
+        <parameter name="LCIOInputFiles"> lss_rec.slcio </parameter>
+        <!-- limit the number of processed records (run+evt): -->  
+        <parameter name="MaxRecordNumber" value="-1" />  
+        <parameter name="SkipNEvents" value="0" />  
+        <parameter name="SupressCheck" value="false" />  
+        <parameter name="GearXMLFile"> GearOutput.xml </parameter>  
+        <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> MESSAGE  </parameter> 
+        <parameter name="RandomSeed" value="1234567890" />
+        <!-- optionally limit the collections that are read from the input file: -->  
+        <!--parameter name="LCIOReadCollectionNames">MCParticle PandoraPFOs</parameter-->
+    </global>
+
+    <processor name="MyAna4b" type="Ana4b">
+        <!--If zero an already existing file will not be overwritten.-->
+        <parameter name="OverwriteFile" type="int">0 </parameter>
+        <!--The name of the ROOT tree-->
+        <parameter name="TreeName" type="string">Ana </parameter>
+        <!--The name of the file to which the ROOT tree will be written-->
+        <parameter name="TreeOutputFile" type="string">Ana4b.root </parameter>
+        <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+        <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+    </processor>
+
+</marlin>
