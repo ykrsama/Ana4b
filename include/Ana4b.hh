@@ -48,17 +48,17 @@ protected:
 
     // Variables fill to tree
     int _eventNum;
-    // mass
+    // mass of b jets
     double _mass1;
     double _mass2;
     double _mass3;
     double _mass4;
-    // energy
+    // energy of b jets
     double _E1;
     double _E2;
     double _E3;
     double _E4;
-    // momentum
+    // momentum of b jets
     FloatVec p1Vec;
     FloatVec p2Vec;
     FloatVec p3Vec;
@@ -84,6 +84,12 @@ protected:
     double _h2Psqr;
     double _h2E;
     double _h2InvMass;
+    double _h11Psqr;
+    double _h12Psqr;
+    double _h11E;
+    double _h12E;
+    double _h11InvMass;
+    double _h12InvMass;
 
     // run time variables
     int NJetsNum;
