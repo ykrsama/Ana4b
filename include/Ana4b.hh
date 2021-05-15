@@ -19,7 +19,7 @@ class TTree;
 class Ana4b : public marlin::Processor
 {
 public:
-    Processor* newProcessor() {return new Ana4b ; }
+    Processor* newProcessor() {return new Ana4b ; };
 
     Ana4b();
 
