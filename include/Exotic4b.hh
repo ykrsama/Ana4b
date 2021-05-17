@@ -59,7 +59,8 @@ protected:
     int ibtag; // Parameter index of BTag
     int ictag; // Parameter index of CTag
     int iltag; // value of light jet param
-    int icategory; // Parameter index of Category 
+    int icategory; // Parameter index of Category
+
 
 };
 

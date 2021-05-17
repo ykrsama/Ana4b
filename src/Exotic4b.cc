@@ -75,6 +75,14 @@ void Exotic4b::processEvent( LCEvent *evtP )
     {
         try
         {
+            // declear containers
+            DoubleVec vjE; // x0 of jet i of 4
+            DoubleVec vjPx; // momentum x of jet i of 4
+            DoubleVec vjPy;
+            DoubleVec vjPz;
+            DoubleVec vbTag; // b tag of jet i of 4
+            DoubleVec vcTag; // c tag of jet i of 4
+            DoubleVec vlTag; // light tag of jet i of 4
             // Get Collection
             LCCollection* colJet = evtP->getCollection(_colName);
             NJetsNum = colJet->getNumberOfElements();
@@ -86,11 +94,15 @@ void Exotic4b::processEvent( LCEvent *evtP )
             // Get lcfiplus parameter indicies
             ibtag = pidH.getParameterIndex(alcfiplus, "BTag");
             ictag = pidH.getParameterIndex(alcfiplus, "CTag");
-            // Get PID
+            // Get jet PID
             for (int i = 0; i < NJetsNum; i++)
             {
                 ReconstructedParticle* recP = dynamic_cast<ReconstructedParticle*>(colJet->getElementAt(i));
-                // mass
+                // jet 4-momentum
+                vjE.push_back( recP->getEnergy() );
+                vjPx.push_back( recP->getMomentum()[0] );
+                vjPy.push_back( recP->getMomentum()[1] );
+                vjPz.push_back( recP->getMomentum()[2] );
             }
         }catch (lcio::DataNotAvailableException err) {}
     }
