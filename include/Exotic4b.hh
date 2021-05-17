@@ -63,6 +63,8 @@ private:
     std::string _colName;
     std::ostream _output;
     int _overwrite;
+    double _EjCut; // Cut of jet Energy
+    double _RmCut; // Cut of Rm
 
     // Variables fill to tree
     int _eventNum;
@@ -74,7 +76,6 @@ private:
     // double _h1E; // Singlet Energy
     double _deltaM;
     double _Rm;
-    double _EjCut; // Cut of jet Energy
 
     // run time variables
     int NJetsNum;

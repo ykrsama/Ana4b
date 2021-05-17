@@ -39,6 +39,12 @@ Exotic4b::Exotic4b()
         "4 jets satisfy Energy >= EjCut",
         _EjCut,
         _EjCut);
+
+    _RmCut=0.1;
+    registerProcessorParameter( "RmCut",
+        "Rm < RmCut",
+        _RmCut,
+        _RmCut);
 }
 
 
@@ -92,7 +98,6 @@ void Exotic4b::init()
     _outputTree->Branch("DeltaR", &_DeltaR);
     _outputTree->Branch("j1Tag",&_j1Tag);
     _outputTree->Branch("j2Tag",&_j2Tag);
-    _outputTree->Branch("EjCut",&_EjCut);
 
 }
 
@@ -200,7 +205,7 @@ void Exotic4b::processEvent( LCEvent *evtP )
             jIndex[3] = 2;
         }
         _Rm = getRm(jIndex[0], jIndex[1], jIndex[2], jIndex[3]);
-        if ( _Rm >= 0.1 ) return;
+        if ( _Rm >= _RmCut ) return;
         
         // fill the first singlet
         for (int i = 0; i < 4; i += 2)
