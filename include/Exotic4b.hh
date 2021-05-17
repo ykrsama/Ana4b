@@ -1,5 +1,5 @@
-#ifndef _RecSinglet_hh_
-#define _RecSinglet_hh_
+#ifndef _Exotic4b_hh_
+#define _Exotic4b_hh_
 
 #include <iostream>
 #include <fstream>
@@ -16,14 +16,14 @@
 class TTree;
 
 
-class RecSinglet : public marlin::Processor
+class Exotic4b : public marlin::Processor
 {
 public:
-    Processor* newProcessor() { return new RecSinglet ; };
+    Processor* newProcessor() { return new Exotic4b ; };
 
-    RecSinglet();
+    Exotic4b();
 
-    ~RecSinglet();
+    ~Exotic4b();
 
     void init();
 

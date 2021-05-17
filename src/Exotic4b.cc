@@ -1,4 +1,4 @@
-#include "RecSinglet.hh"
+#include "Exotic4b.hh"
 #include "EVENT/LCCollection.h"
 #include "EVENT/LCParameters.h"
 #include "EVENT/ReconstructedParticle.h"
@@ -6,16 +6,16 @@
 #include <math.h>
 
 
-RecSinglet RecSinglet_instance;
+Exotic4b Exotic4b_instance;
 
 
-RecSinglet::RecSinglet()
-    : Processor("RecSinglet"),
+Exotic4b::Exotic4b()
+    : Processor("Exotic4b"),
     _output(0)
 {
     _description = "Reconstruct the light singlet h1. Channel: h2 > h1h1 > 4b.";
 
-    _treeFileName = "RecSinglet.root";
+    _treeFileName = "Exotic4b.root";
     registerProcessorParameter( "TreeOutputFile",
         "The name of the file to which the ROOT tree will be written",
         _treeFileName,
@@ -35,13 +35,13 @@ RecSinglet::RecSinglet()
 }
 
 
-RecSinglet::~RecSinglet()
+Exotic4b::~Exotic4b()
 {
     delete tree_file;
 }
 
 
-void RecSinglet::init()
+void Exotic4b::init()
 {
     printParameters();
 
@@ -69,7 +69,7 @@ void RecSinglet::init()
 }
 
 
-void RecSinglet::processEvent( LCEvent *evtP )
+void Exotic4b::processEvent( LCEvent *evtP )
 {
     if (evtP)
     {
@@ -98,7 +98,7 @@ void RecSinglet::processEvent( LCEvent *evtP )
 }
 
 
-void RecSinglet::end()
+void Exotic4b::end()
 {
     if (_outputTree)
     {
