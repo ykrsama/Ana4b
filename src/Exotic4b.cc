@@ -93,7 +93,7 @@ void Exotic4b::init()
     _outputTree->Branch("h1InvMass", &_h1InvMass);
     _outputTree->Branch("deltaM", &_deltaM);
     _outputTree->Branch("Rm", &_Rm);
-    _outputTree->Barnch("Pm", &_Pm);
+    _outputTree->Branch("dMsM", &_dMsM);
     // _outputTree->Branch("h1Psqr", &_h1Psqr);
     // _outputTree->Branch("h1E", &_h1E);
     _outputTree->Branch("DeltaR", &_DeltaR);
@@ -190,8 +190,8 @@ void Exotic4b::processEvent( LCEvent *evtP )
         jIndex[1] = 1;
         jIndex[2] = 2;
         jIndex[3] = 3;
-        //if ( getDeltaM(0, 2, 1, 3) < _deltaM )
-        if ( getdMsM(0, 2, 1, 3) < _dMsM )
+        if ( getDeltaM(0, 2, 1, 3) < _deltaM )
+        //if ( getdMsM(0, 2, 1, 3) < _dMsM )
         {
             _deltaM = getDeltaM(0, 2, 1, 3);
             _dMsM = getdMsM(0, 2, 1, 3);
@@ -200,8 +200,8 @@ void Exotic4b::processEvent( LCEvent *evtP )
             jIndex[2] = 1;
             jIndex[3] = 3;
         }
-        //if ( getDeltaM(0, 3, 1, 2) < _deltaM )
-        if ( getdMsM(0, 3, 1, 2) < _dMsM )
+        if ( getDeltaM(0, 3, 1, 2) < _deltaM )
+        //if ( getdMsM(0, 3, 1, 2) < _dMsM )
         {
             _deltaM = getDeltaM(0, 3, 1, 2);
             _dMsM = getdMsM(0, 3, 1, 2);
