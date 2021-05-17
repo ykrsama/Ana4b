@@ -37,7 +37,7 @@ public:
     void end();
 
 private:
-    double Get_massjj(  double j1E,
+    double getMassjj(  double j1E,
                     double j1Px,
                     double j1Py,
                     double j1Pz,
@@ -47,9 +47,9 @@ private:
                     double j2Pz );
 
 
-    double Get_deltaM( int j1, int j2, int j3, int j4) { return fabs( Mjj[j1][j2] - Mjj[j3][j4] ); };
+    double getDeltaM( int j1, int j2, int j3, int j4) { return fabs( Mjj[j1][j2] - Mjj[j3][j4] ); };
 
-    double Get_Rm( int j1, int j2, int j3, int j4 ) { return fabs( ( Mjj[j1][j2] - Mjj[j3][j4] ) / ( Mjj[j1][j2] + Mjj[j3][j4] ) ); };
+    double getRm( int j1, int j2, int j3, int j4 ) { return fabs( ( Mjj[j1][j2] - Mjj[j3][j4] ) / ( Mjj[j1][j2] + Mjj[j3][j4] ) ); };
 
 private:
     // ROOT related

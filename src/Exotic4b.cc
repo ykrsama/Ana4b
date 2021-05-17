@@ -42,7 +42,7 @@ Exotic4b::~Exotic4b()
 }
 
 
-double Get_massjj(  double j1E,
+double getMassjj(  double j1E,
                 double j1Px,
                 double j1Py,
                 double j1Pz,
@@ -161,7 +161,7 @@ void Exotic4b::processEvent( LCEvent *evtP )
         {
             for (int j = i + 1; j < NJetsNum; j++)
             {
-                Mjj[i][j] = Get_massjj(vjE.at(i),
+                Mjj[i][j] = getMassjj(vjE.at(i),
                                     vjPx.at(i),
                                     vjPy.at(i),
                                     vjPz.at(i),
@@ -171,7 +171,7 @@ void Exotic4b::processEvent( LCEvent *evtP )
                                     vjPz.at(j));
             }
         }
-        _deltaM = Get_deltaM(0,1,2,3);
+        _deltaM = getDeltaM(0,1,2,3);
 
 
     }
