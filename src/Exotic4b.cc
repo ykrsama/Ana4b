@@ -193,7 +193,7 @@ void Exotic4b::processEvent( LCEvent *evtP )
             jIndex[3] = 2;
         }
         _Rm = getRm(jIndex[0], jIndex[1], jIndex[2], jIndex[3]);
-        if ( _Rm > 0.1 ) return;
+        if ( _Rm >= 0.1 ) return;
 
     }
 
