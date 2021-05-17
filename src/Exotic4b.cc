@@ -108,6 +108,7 @@ void Exotic4b::processEvent( LCEvent *evtP )
             // Get Collection
             LCCollection* colJet = evtP->getCollection(_colName);
             NJetsNum = colJet->getNumberOfElements();
+            _eventNum = evtP->getEventNumber();
             // check NJetsNum
             if ( NJetsNum != 4 ) return;
             // cut Energy of jets
@@ -194,6 +195,28 @@ void Exotic4b::processEvent( LCEvent *evtP )
         }
         _Rm = getRm(jIndex[0], jIndex[1], jIndex[2], jIndex[3]);
         if ( _Rm >= 0.1 ) return;
+        
+        // fill the first singlet
+        for (int i = 0; i < 4; i += 2)
+        {
+            j1I = jIndex[i];
+            j2I = jIndex[i + 1];
+            
+            _h1InvMass = Mjj[ j1I ][ j2I ];
+            _j1Tag = vjTag[ j1I ];
+            _j2Tag = vjTag[ j2I ];
+            // calculate deltaR
+            Vj1.SetPxPyPzE( vjPx[ j1I ],
+                            vjPy[ j1I ],
+                            vjPz[ j1I ],
+                            vjE[ j1I ]);
+            Vj2.SetPxPyPzE( vjPx[ j2I ],
+                            vjPy[ j2I ],
+                            vjPz[ j2I ],
+                            vjE[ j2I ]);
+            _DeltaR = Vj1.DeltaR(Vj2);
+        }
+        
 
     }
 

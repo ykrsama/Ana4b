@@ -16,6 +16,7 @@
 
 #include "TTree.h"
 #include "TFile.h"
+#include "TLorentzVector.h"
 
 
 class TTree;
@@ -66,13 +67,13 @@ private:
     // Variables fill to tree
     int _eventNum;
     double _h1InvMass; // invariant mass of h1 (singlet)
+    double _DeltaR; // DeltaR of j1 j2
+    std::string _j1Tag; // Tag of j1
+    std::string _j2Tag; // Tag of j2
+    // double _h1Psqr; // Singlet momentum square
+    // double _h1E; // Singlet Energy
     double _deltaM;
     double _Rm;
-    // double _h1Psqr; // Singlet momentum square
-    // double _h1E; // Singlet Kinetic Energy
-    double _DeltaR; // DeltaR of j1 j2
-    double _j1Tag; // Tag of j1
-    double _j2Tag; // Tag of j2
     double _EjCut; // Cut of jet Energy
 
     // run time variables
@@ -91,6 +92,11 @@ private:
 
     double Mjj[4][4]; // matrix of massjj. Is a upper triangular matrix.
     int jIndex[4];
+    int j1I; // tempory index
+    int j2I; // tempory index
+
+    TLorentzVector Vj1;
+    TLorentzVector Vj2;
 };
 
 #endif
