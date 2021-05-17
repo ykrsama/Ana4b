@@ -90,7 +90,7 @@ private:
     std::string tempTag;
 
     double Mjj[4][4]; // matrix of massjj. Is a upper triangular matrix.
-    int jetIndex[4];
+    int jIndex[4];
 };
 
 #endif

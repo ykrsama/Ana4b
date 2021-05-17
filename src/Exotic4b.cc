@@ -171,7 +171,27 @@ void Exotic4b::processEvent( LCEvent *evtP )
                                     vjPz.at(j));
             }
         }
-        _deltaM = getDeltaM(0,1,2,3);
+        _deltaM = getDeltaM(0, 1, 2, 3);
+        jIndex[0] = 0;
+        jIndex[1] = 1;
+        jIndex[2] = 2;
+        jIndex[3] = 3;
+        if ( getDeltaM(0, 2, 1, 3) < _deltaM )
+        {
+            _deltaM = getDeltaM(0, 2, 1, 3);
+            jIndex[0] = 0;
+            jIndex[1] = 2;
+            jIndex[2] = 1;
+            jIndex[3] = 3;
+        }
+        if ( getDeltaM(0, 3, 1, 2) < _deltaM )
+        {
+            _deltaM = getDeltaM(0, 3, 1, 2);
+            jIndex[0] = 0;
+            jIndex[1] = 3;
+            jIndex[2] = 1;
+            jIndex[3] = 2;
+        }
 
 
     }
