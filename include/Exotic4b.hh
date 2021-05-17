@@ -26,6 +26,13 @@ public:
 
     ~Exotic4b();
 
+    void init();
+
+    void processEvent( LCEvent * evtP );
+
+    void end();
+
+private:
     double massjj(  double j1E,
                     double j1Px,
                     double j1Py,
@@ -37,13 +44,9 @@ public:
 
     double deltaM( double Mj1j2, double Mj3j4) { return fabs(Mj1j2 - Mj3j4); };
 
-    void init();
+    double RM( double Mj1j2, double Mj3j4 ) { return fabs( ( Mj1j2 - Mj3j4 ) / ( Mj1j2 + Mj3j4 ) ); };
 
-    void processEvent( LCEvent * evtP );
-
-    void end();
-
-protected:
+private:
     // ROOT related
     TFile *tree_file;
     TTree *_outputTree;
