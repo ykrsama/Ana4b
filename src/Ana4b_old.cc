@@ -6,10 +6,10 @@
 #include <math.h>
 
 
-Ana4b Ana4b_instance;
+Ana4b_old Ana4b_instance;
 
 
-Ana4b::Ana4b()
+Ana4b_old::Ana4b_old()
     : Processor("Ana4b"),
     _output(0),
     totalRec4b(0)
@@ -49,12 +49,12 @@ Ana4b::Ana4b()
 }
 
 
-Ana4b::~Ana4b() {
+Ana4b_old::~Ana4b_old() {
     delete tree_file;
 }
 
 
-void Ana4b::init() {
+void Ana4b_old::init() {
     printParameters();
 
     tree_file = new TFile(_treeFileName.c_str(), (_overwrite ? "RECREATE" : "UPDATE") );
@@ -114,7 +114,7 @@ void Ana4b::init() {
 }
 
 
-void Ana4b::processEvent( LCEvent *evtP ) {
+void Ana4b_old::processEvent( LCEvent *evtP ) {
     if (evtP) {
         try {
             // Clear containers
@@ -248,7 +248,7 @@ void Ana4b::processEvent( LCEvent *evtP ) {
 }
 
 
-void Ana4b::end() {
+void Ana4b_old::end() {
     if (_outputTree) {
         tree_file = _outputTree->GetCurrentFile(); //just in case we switched to a new file
         tree_file->Write();

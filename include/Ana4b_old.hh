@@ -16,14 +16,14 @@
 class TTree;
 
 
-class Ana4b : public marlin::Processor
+class Ana4b_old : public marlin::Processor
 {
 public:
-    Processor* newProcessor() {return new Ana4b ; };
+    Processor* newProcessor() {return new Ana4b_old ; };
 
-    Ana4b();
+    Ana4b_old();
 
-    ~Ana4b();
+    ~Ana4b_old();
 
     void init();
 

@@ -54,6 +54,7 @@ protected:
     double _EjCut; // Cut of jet Energy
 
     // run time variables
+    int NJetsNum;
     int alcfiplus; // Algorithm ID of lcfiplus
     int ibtag; // Parameter index of BTag
     int ictag; // Parameter index of CTag
