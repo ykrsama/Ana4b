@@ -16,6 +16,12 @@ Exotic4b::Exotic4b()
         _treeFileName,
         _treeFileName);
 
+    _treeName = "exotic";
+    registerProcessorParameter( "TreeName",
+        "The name of the ROOT tree",
+        _treeName,
+        _treeName);
+
     _colName = "RefinedJets";
     registerProcessorParameter( "CollctionName",
         "The name of Jet Collection.",
@@ -42,7 +48,7 @@ Exotic4b::~Exotic4b()
 }
 
 
-double getMassjj(  double j1E,
+double Exotic4b::getMassjj(  double j1E,
                 double j1Px,
                 double j1Py,
                 double j1Pz,
