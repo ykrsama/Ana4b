@@ -25,6 +25,15 @@ public:
 
     ~Exotic4b();
 
+    double massjj(  double j1E,
+                    double j1Px,
+                    double j1Py,
+                    double j1Pz,
+                    double j2E,
+                    double j2Px,
+                    double j2Py,
+                    double j2Pz );
+
     void init();
 
     void processEvent( LCEvent * evtP );

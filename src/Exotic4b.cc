@@ -41,6 +41,25 @@ Exotic4b::~Exotic4b()
 }
 
 
+double massjj(  double j1E,
+                double j1Px,
+                double j1Py,
+                double j1Pz,
+                double j2E,
+                double j2Px,
+                double j2Py,
+                double j2Pz)
+{
+    double Ejj = j1E + j2E;
+    double Pjjx = j1Px + j2Px;
+    double Pjjy = j1Py + j2Py;
+    double Pjjz = j1Pz + j2Pz;
+    double Pjjsqr = Pjjx * Pjjx + Pjjy * Pjjy + Pjjz * Pjjz;
+    double Mjj = sqrt( Ejj * Ejj - Pjjsqr );
+    return Mjj;
+}
+
+
 void Exotic4b::init()
 {
     printParameters();
@@ -79,6 +98,7 @@ void Exotic4b::processEvent( LCEvent *evtP )
         DoubleVec vjPy;
         DoubleVec vjPz;
         StringVec vjTag;
+
         // read lcio data
         try
         {
