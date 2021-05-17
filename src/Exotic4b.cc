@@ -80,7 +80,7 @@ void Exotic4b::init()
     // Singlet information
     _outputTree->Branch("h1InvMass", &_h1InvMass);
     _outputTree->Branch("deltaM", &_deltaM);
-    _outputTree->Branch("Rm", &_Rm)
+    _outputTree->Branch("Rm", &_Rm);
     // _outputTree->Branch("h1Psqr", &_h1Psqr);
     // _outputTree->Branch("h1E", &_h1E);
     _outputTree->Branch("DeltaR", &_DeltaR);
