@@ -32,6 +32,12 @@ Exotic4b::Exotic4b()
         "If zero an already existing file will not be overwritten.",
         _overwrite,
         _overwrite);
+    
+    _EjCut=5; // GeV
+    registerProcessorParameter( "EjCut",
+        "4 jets satisfy Energy > EjCut",
+        _EjCut,
+        _EjCut);
 }
 
 
@@ -118,6 +124,8 @@ void Exotic4b::processEvent( LCEvent *evtP )
             {
                 // reconstructed jet particle
                 ReconstructedParticle* recP = dynamic_cast<ReconstructedParticle*>(colJet->getElementAt(i));
+                // cut Energy of j
+                if ( recP->getEnergy() < _EjCut)
                 // jets 4-momentum
                 vjE.push_back( recP->getEnergy() );
                 vjPx.push_back( recP->getMomentum()[0] );
