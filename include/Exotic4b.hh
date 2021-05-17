@@ -52,6 +52,8 @@ private:
 
     double getRm( int j1, int j2, int j3, int j4 ) { return fabs( ( Mjj[j1][j2] - Mjj[j3][j4] ) / ( Mjj[j1][j2] + Mjj[j3][j4] ) ); };
 
+    double getdMsM( int j1, int j2, int j3, int j4 ) { return fabs( ( Mjj[j1][j2] - Mjj[j3][j4] ) * ( Mjj[j1][j2] + Mjj[j3][j4] ) ) }
+
 private:
     // ROOT related
     TFile *tree_file;
@@ -76,6 +78,7 @@ private:
     // double _h1E; // Singlet Energy
     double _deltaM;
     double _Rm;
+    double _dMsM;
 
     // run time variables
     int NJetsNum;
