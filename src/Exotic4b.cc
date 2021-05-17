@@ -216,7 +216,7 @@ void Exotic4b::processEvent( LCEvent *evtP )
             jIndex[2] = 1;
             jIndex[3] = 2;
         }
-        if ( _dM >= _dMCut ) return;
+        if ( _deltaM >= _dMCut ) return;
 
         _Rm = getRm(jIndex[0], jIndex[1], jIndex[2], jIndex[3]);
         if ( _Rm >= _RmCut ) return;
