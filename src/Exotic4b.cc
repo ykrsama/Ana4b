@@ -160,6 +160,21 @@ void Exotic4b::processEvent( LCEvent *evtP )
         }catch (lcio::DataNotAvailableException err) {}
         
         // reconstruct singlet scaler
+        for (int i = 0; i < NJetsNum; i++)
+        {
+            for (int j = i + 1; j < NJetsNum; j++)
+            {
+                mMjj[i][j] = massjj(vjE.at(i),
+                                    vjPx.at(i),
+                                    vjPy.at(i),
+                                    vjPz.at(i),
+                                    vjE.at(j),
+                                    vjPx.at(j),
+                                    vjPy.at(j),
+                                    vjPz.at(j));
+            }
+        }
+        
 
     }
 

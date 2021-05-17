@@ -5,6 +5,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <math.h>
 
 #include "marlin/Processor.h"
 #include "LCIOSTLTypes.h"
@@ -33,6 +34,8 @@ public:
                     double j2Px,
                     double j2Py,
                     double j2Pz );
+
+    double deltaM( double Mj1j2, double Mj3j4) { return fabs(Mj1j2 - Mj3j4); };
 
     void init();
 
@@ -76,6 +79,7 @@ protected:
     double tempTagParam; // temperory tag probability
     std::string tempTag;
 
+    double mMjj[4][4]; // matrix of massjj. Is a upper triangular matrix.
 };
 
 #endif
