@@ -33,6 +33,12 @@ Exotic4b::Exotic4b()
         "If zero an already existing file will not be overwritten.",
         _overwrite,
         _overwrite);
+
+    _dMCut=1; // GeV
+    registerProcessorParameter( "dMCut",
+        "delta M cut",
+        _dMCut,
+        _dMCut);
     
     _EjCut=5; // GeV
     registerProcessorParameter( "EjCut",
@@ -93,7 +99,7 @@ void Exotic4b::init()
     _outputTree->Branch("h1InvMass", &_h1InvMass);
     _outputTree->Branch("deltaM", &_deltaM);
     _outputTree->Branch("Rm", &_Rm);
-    _outputTree->Branch("dMsM", &_dMsM);
+    //_outputTree->Branch("dMsM", &_dMsM);
     // _outputTree->Branch("h1Psqr", &_h1Psqr);
     // _outputTree->Branch("h1E", &_h1E);
     _outputTree->Branch("DeltaR", &_DeltaR);
@@ -185,7 +191,7 @@ void Exotic4b::processEvent( LCEvent *evtP )
             }
         }
         _deltaM = getDeltaM(0, 1, 2, 3);
-        _dMsM = getdMsM(0, 1, 2, 3);
+        //_dMsM = getdMsM(0, 1, 2, 3);
         jIndex[0] = 0;
         jIndex[1] = 1;
         jIndex[2] = 2;
@@ -194,7 +200,7 @@ void Exotic4b::processEvent( LCEvent *evtP )
         //if ( getdMsM(0, 2, 1, 3) < _dMsM )
         {
             _deltaM = getDeltaM(0, 2, 1, 3);
-            _dMsM = getdMsM(0, 2, 1, 3);
+            //_dMsM = getdMsM(0, 2, 1, 3);
             jIndex[0] = 0;
             jIndex[1] = 2;
             jIndex[2] = 1;
@@ -204,12 +210,14 @@ void Exotic4b::processEvent( LCEvent *evtP )
         //if ( getdMsM(0, 3, 1, 2) < _dMsM )
         {
             _deltaM = getDeltaM(0, 3, 1, 2);
-            _dMsM = getdMsM(0, 3, 1, 2);
+            //_dMsM = getdMsM(0, 3, 1, 2);
             jIndex[0] = 0;
             jIndex[1] = 3;
             jIndex[2] = 1;
             jIndex[3] = 2;
         }
+        if ( _dM >= _dMCut ) return;
+
         _Rm = getRm(jIndex[0], jIndex[1], jIndex[2], jIndex[3]);
         if ( _Rm >= _RmCut ) return;
         
