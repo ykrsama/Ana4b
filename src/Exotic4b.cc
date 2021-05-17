@@ -35,7 +35,7 @@ Exotic4b::Exotic4b()
     
     _EjCut=5; // GeV
     registerProcessorParameter( "EjCut",
-        "4 jets satisfy Energy > EjCut",
+        "4 jets satisfy Energy >= EjCut",
         _EjCut,
         _EjCut);
 }
@@ -119,13 +119,18 @@ void Exotic4b::processEvent( LCEvent *evtP )
             // Get lcfiplus parameter indicies
             ibtag = pidH.getParameterIndex(alcfiplus, "BTag");
             ictag = pidH.getParameterIndex(alcfiplus, "CTag");
+            // cut Energy of jets
+            for (int i = 0; i < NJetsNum; i++)
+            {
+                // reconstructed jet particle
+                ReconstructedParticle* recP = dynamic_cast<ReconstructedParticle*>(colJet->getElementAt(i));
+                if ( recP->getEnergy() < _EjCut) return;
+            }
             // Get jets PID
             for (int i = 0; i < NJetsNum; i++)
             {
                 // reconstructed jet particle
                 ReconstructedParticle* recP = dynamic_cast<ReconstructedParticle*>(colJet->getElementAt(i));
-                // cut Energy of j
-                if ( recP->getEnergy() < _EjCut)
                 // jets 4-momentum
                 vjE.push_back( recP->getEnergy() );
                 vjPx.push_back( recP->getMomentum()[0] );
