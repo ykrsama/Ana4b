@@ -111,14 +111,8 @@ void Exotic4b::processEvent( LCEvent *evtP )
             // Get Collection
             LCCollection* colJet = evtP->getCollection(_colName);
             NJetsNum = colJet->getNumberOfElements();
+            // check NJetsNum
             if ( NJetsNum != 4 ) return;
-            // Handle PID information
-            PIDHandler pidH (colJet);
-            // Get algorithm IDs
-            alcfiplus = pidH.getAlgorithmID("lcfiplus");
-            // Get lcfiplus parameter indicies
-            ibtag = pidH.getParameterIndex(alcfiplus, "BTag");
-            ictag = pidH.getParameterIndex(alcfiplus, "CTag");
             // cut Energy of jets
             for (int i = 0; i < NJetsNum; i++)
             {
@@ -126,6 +120,13 @@ void Exotic4b::processEvent( LCEvent *evtP )
                 ReconstructedParticle* recP = dynamic_cast<ReconstructedParticle*>(colJet->getElementAt(i));
                 if ( recP->getEnergy() < _EjCut) return;
             }
+            // Handle PID information
+            PIDHandler pidH (colJet);
+            // Get algorithm IDs
+            alcfiplus = pidH.getAlgorithmID("lcfiplus");
+            // Get lcfiplus parameter indicies
+            ibtag = pidH.getParameterIndex(alcfiplus, "BTag");
+            ictag = pidH.getParameterIndex(alcfiplus, "CTag");
             // Get jets PID
             for (int i = 0; i < NJetsNum; i++)
             {
