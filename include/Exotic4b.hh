@@ -61,6 +61,11 @@ protected:
     int iltag; // value of light jet param
     int icategory; // Parameter index of Category
 
+    double bTag;
+    double cTag;
+    double lTag;
+    double tempTagParam; // temperory tag probability
+    std::string tempTag;
 
 };
 

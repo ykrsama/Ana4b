@@ -65,7 +65,7 @@ void Exotic4b::init()
     _outputTree->Branch("j1Tag",&_j1Tag);
     _outputTree->Branch("j2Tag",&_j2Tag);
     _outputTree->Branch("EjCut",&_EjCut);
-    
+
 }
 
 
@@ -73,16 +73,15 @@ void Exotic4b::processEvent( LCEvent *evtP )
 {
     if (evtP)
     {
+        // declear containers
+        DoubleVec vjE; // x0 of jet i of 4
+        DoubleVec vjPx; // momentum x of jet i of 4
+        DoubleVec vjPy;
+        DoubleVec vjPz;
+        StringVec vjTag;
+        // read lcio data
         try
         {
-            // declear containers
-            DoubleVec vjE; // x0 of jet i of 4
-            DoubleVec vjPx; // momentum x of jet i of 4
-            DoubleVec vjPy;
-            DoubleVec vjPz;
-            DoubleVec vbTag; // b tag of jet i of 4
-            DoubleVec vcTag; // c tag of jet i of 4
-            DoubleVec vlTag; // light tag of jet i of 4
             // Get Collection
             LCCollection* colJet = evtP->getCollection(_colName);
             NJetsNum = colJet->getNumberOfElements();
@@ -94,17 +93,40 @@ void Exotic4b::processEvent( LCEvent *evtP )
             // Get lcfiplus parameter indicies
             ibtag = pidH.getParameterIndex(alcfiplus, "BTag");
             ictag = pidH.getParameterIndex(alcfiplus, "CTag");
-            // Get jet PID
+            // Get jets PID
             for (int i = 0; i < NJetsNum; i++)
             {
+                // reconstructed jet particle
                 ReconstructedParticle* recP = dynamic_cast<ReconstructedParticle*>(colJet->getElementAt(i));
-                // jet 4-momentum
+                // jets 4-momentum
                 vjE.push_back( recP->getEnergy() );
                 vjPx.push_back( recP->getMomentum()[0] );
                 vjPy.push_back( recP->getMomentum()[1] );
                 vjPz.push_back( recP->getMomentum()[2] );
+                // lcfipuls parameters of recP
+                const ParticleID &pid_lcfiplus = pidH.getParticleID(recP, alcfiplus);
+                bTag = pid_lcfiplus.getParameters()[ibtag];
+                cTag = pid_lcfiplus.getParameters()[ictag];
+                lTag = 1 - bTag - cTag;
+                // find most likely jet tag
+                tempTagParam = bTag;
+                tempTag = "b";
+                if ( cTag > tempTagParam )
+                {
+                    tempTagParam = cTag;
+                    tempTag = "c";
+                }
+                if ( lTag > tempTagParam )
+                {
+                    tempTagParam = lTag;
+                    tempTag = "l";
+                }
+                vjTag.push_back( tempTag );
             }
         }catch (lcio::DataNotAvailableException err) {}
+        
+        // reconstruct singlet scaler
+
     }
 
 }
