@@ -215,6 +215,8 @@ void Exotic4b::processEvent( LCEvent *evtP )
                             vjPz[ j2I ],
                             vjE[ j2I ]);
             _DeltaR = Vj1.DeltaR(Vj2);
+
+            _outputTree->Fill();
         }
         
 
