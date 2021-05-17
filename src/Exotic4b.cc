@@ -1,9 +1,4 @@
 #include "Exotic4b.hh"
-#include "EVENT/LCCollection.h"
-#include "EVENT/LCParameters.h"
-#include "EVENT/ReconstructedParticle.h"
-#include "UTIL/PIDHandler.h"
-#include <math.h>
 
 
 Exotic4b Exotic4b_instance;
@@ -47,7 +42,7 @@ Exotic4b::~Exotic4b()
 }
 
 
-double massjj(  double j1E,
+double Get_massjj(  double j1E,
                 double j1Px,
                 double j1Py,
                 double j1Pz,
@@ -84,8 +79,10 @@ void Exotic4b::init()
     _outputTree->Branch("EventNum", &_eventNum, "EventNum/I");
     // Singlet information
     _outputTree->Branch("h1InvMass", &_h1InvMass);
-    _outputTree->Branch("h1Psqr", &_h1Psqr);
-    _outputTree->Branch("h1E", &_h1E);
+    _outputTree->Branch("deltaM", &_deltaM);
+    _outputTree->Branch("Rm", &_Rm)
+    // _outputTree->Branch("h1Psqr", &_h1Psqr);
+    // _outputTree->Branch("h1E", &_h1E);
     _outputTree->Branch("DeltaR", &_DeltaR);
     _outputTree->Branch("j1Tag",&_j1Tag);
     _outputTree->Branch("j2Tag",&_j2Tag);
@@ -164,7 +161,7 @@ void Exotic4b::processEvent( LCEvent *evtP )
         {
             for (int j = i + 1; j < NJetsNum; j++)
             {
-                mMjj[i][j] = massjj(vjE.at(i),
+                Mjj[i][j] = Get_massjj(vjE.at(i),
                                     vjPx.at(i),
                                     vjPy.at(i),
                                     vjPz.at(i),
@@ -174,7 +171,8 @@ void Exotic4b::processEvent( LCEvent *evtP )
                                     vjPz.at(j));
             }
         }
-        
+        _deltaM = Get_deltaM(0,1,2,3);
+
 
     }
 

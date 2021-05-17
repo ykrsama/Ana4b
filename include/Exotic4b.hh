@@ -9,6 +9,10 @@
 
 #include "marlin/Processor.h"
 #include "LCIOSTLTypes.h"
+#include "EVENT/LCCollection.h"
+#include "EVENT/LCParameters.h"
+#include "EVENT/ReconstructedParticle.h"
+#include "UTIL/PIDHandler.h"
 
 #include "TTree.h"
 #include "TFile.h"
@@ -33,7 +37,7 @@ public:
     void end();
 
 private:
-    double massjj(  double j1E,
+    double Get_massjj(  double j1E,
                     double j1Px,
                     double j1Py,
                     double j1Pz,
@@ -42,9 +46,10 @@ private:
                     double j2Py,
                     double j2Pz );
 
-    double deltaM( double Mj1j2, double Mj3j4) { return fabs(Mj1j2 - Mj3j4); };
 
-    double RM( double Mj1j2, double Mj3j4 ) { return fabs( ( Mj1j2 - Mj3j4 ) / ( Mj1j2 + Mj3j4 ) ); };
+    double Get_deltaM( int j1, int j2, int j3, int j4) { return fabs( Mjj[j1][j2] - Mjj[j3][j4] ); };
+
+    double Get_Rm( int j1, int j2, int j3, int j4 ) { return fabs( ( Mjj[j1][j2] - Mjj[j3][j4] ) / ( Mjj[j1][j2] + Mjj[j3][j4] ) ); };
 
 private:
     // ROOT related
@@ -61,8 +66,10 @@ private:
     // Variables fill to tree
     int _eventNum;
     double _h1InvMass; // invariant mass of h1 (singlet)
-    double _h1Psqr; // Singlet momentum square
-    double _h1E; // Singlet Kinetic Energy
+    double _deltaM;
+    double _Rm;
+    // double _h1Psqr; // Singlet momentum square
+    // double _h1E; // Singlet Kinetic Energy
     double _DeltaR; // DeltaR of j1 j2
     double _j1Tag; // Tag of j1
     double _j2Tag; // Tag of j2
@@ -82,7 +89,8 @@ private:
     double tempTagParam; // temperory tag probability
     std::string tempTag;
 
-    double mMjj[4][4]; // matrix of massjj. Is a upper triangular matrix.
+    double Mjj[4][4]; // matrix of massjj. Is a upper triangular matrix.
+    int jetIndex[4];
 };
 
 #endif
