@@ -65,7 +65,8 @@ private:
     std::string _colName;
     std::ostream _output;
     int _overwrite;
-    double _dMCut; // Cut of delta m
+    double _deltaMCut; // Cut of delta m
+    double _DeltaRCut;
     double _EjCut; // Cut of jet Energy
     double _RmCut; // Cut of Rm
 

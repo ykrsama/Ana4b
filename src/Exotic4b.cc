@@ -34,11 +34,11 @@ Exotic4b::Exotic4b()
         _overwrite,
         _overwrite);
 
-    _dMCut=1; // GeV
-    registerProcessorParameter( "dMCut",
+    _deltaMCut=1; // GeV
+    registerProcessorParameter( "deltaMCut",
         "delta M cut",
-        _dMCut,
-        _dMCut);
+        _deltaMCut,
+        _deltaMCut);
     
     _EjCut=5; // GeV
     registerProcessorParameter( "EjCut",
@@ -227,7 +227,7 @@ void Exotic4b::processEvent( LCEvent *evtP )
             jIndex[2] = 1;
             jIndex[3] = 2;
         }
-        if ( _deltaM >= _dMCut ) return;
+        if ( _deltaM >= _deltaMCut ) return;
 
         _Rm = getRm(jIndex[0], jIndex[1], jIndex[2], jIndex[3]);
         if ( _Rm >= _RmCut ) return;
