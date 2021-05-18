@@ -66,7 +66,7 @@ private:
     std::ostream _output;
     int _overwrite;
     double _deltaMCut; // Cut of delta m
-    double _DeltaRCut;
+    double _DeltaRMax;
     double _EjCut; // Cut of jet Energy
     double _RmCut; // Cut of Rm
 

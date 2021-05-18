@@ -36,9 +36,15 @@ Exotic4b::Exotic4b()
 
     _deltaMCut=1; // GeV
     registerProcessorParameter( "deltaMCut",
-        "delta M cut",
+        "delta M cut. If set deltaMCut < 0, no cut.",
         _deltaMCut,
         _deltaMCut);
+
+    _DeltaRMax=1; // GeV
+    registerProcessorParameter( "DeltaRMax",
+        "Delta R max. If set deltaMCut < 0, no cut.",
+        _DeltaRMax,
+        _DeltaRMax);
     
     _EjCut=5; // GeV
     registerProcessorParameter( "EjCut",
@@ -227,7 +233,7 @@ void Exotic4b::processEvent( LCEvent *evtP )
             jIndex[2] = 1;
             jIndex[3] = 2;
         }
-        if ( _deltaM >= _deltaMCut ) return;
+        if ( _deltaMCut >=0 && _deltaM >= _deltaMCut ) return;
 
         _Rm = getRm(jIndex[0], jIndex[1], jIndex[2], jIndex[3]);
         if ( _Rm >= _RmCut ) return;
@@ -240,6 +246,9 @@ void Exotic4b::processEvent( LCEvent *evtP )
             
             _h1InvMass = Mjj[ j1I ][ j2I ];
             _DeltaR = DeltaRjj[ j1I ][ j2I ];
+
+            if ( _DeltaRMax >=0 && _DeltaR >=  _DeltaRMax ) return;
+
             _j1Tag = vjTag[ j1I ];
             _j2Tag = vjTag[ j2I ];
 
