@@ -96,6 +96,7 @@ private:
     std::string tempTag;
 
     double Mjj[4][4]; // matrix of massjj. Is a upper triangular matrix.
+    double DeltaRjj[4][4];
     int jIndex[4];
     int j1I; // tempory index
     int j2I; // tempory index

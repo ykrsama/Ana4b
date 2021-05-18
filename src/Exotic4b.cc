@@ -180,6 +180,7 @@ void Exotic4b::processEvent( LCEvent *evtP )
         {
             for (int j = i + 1; j < NJetsNum; j++)
             {
+                // mass jj
                 Mjj[i][j] = getMassjj(vjE.at(i),
                                     vjPx.at(i),
                                     vjPy.at(i),
@@ -188,6 +189,16 @@ void Exotic4b::processEvent( LCEvent *evtP )
                                     vjPx.at(j),
                                     vjPy.at(j),
                                     vjPz.at(j));
+                // calculate deltaR
+                Vj1.SetPxPyPzE( vjPx[ i ],
+                                vjPy[ i ],
+                                vjPz[ i ],
+                                vjE[ i ]);
+                Vj2.SetPxPyPzE( vjPx[ j ],
+                                vjPy[ j ],
+                                vjPz[ j ],
+                                vjE[ j ]);
+                DeltaRjj[i][j] = Vj1.DeltaR(Vj2);
             }
         }
         _deltaM = getDeltaM(0, 1, 2, 3);
@@ -228,18 +239,9 @@ void Exotic4b::processEvent( LCEvent *evtP )
             j2I = jIndex[i + 1];
             
             _h1InvMass = Mjj[ j1I ][ j2I ];
+            _DeltaR = DeltaRjj[ j1I ][ j2I ];
             _j1Tag = vjTag[ j1I ];
             _j2Tag = vjTag[ j2I ];
-            // calculate deltaR
-            Vj1.SetPxPyPzE( vjPx[ j1I ],
-                            vjPy[ j1I ],
-                            vjPz[ j1I ],
-                            vjE[ j1I ]);
-            Vj2.SetPxPyPzE( vjPx[ j2I ],
-                            vjPy[ j2I ],
-                            vjPz[ j2I ],
-                            vjE[ j2I ]);
-            _DeltaR = Vj1.DeltaR(Vj2);
 
             _outputTree->Fill();
         }
