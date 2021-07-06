@@ -12,6 +12,7 @@
 #include "EVENT/LCCollection.h"
 #include "EVENT/LCParameters.h"
 #include "EVENT/ReconstructedParticle.h"
+#include "EVENT/MCParticle.h"
 #include "UTIL/PIDHandler.h"
 
 #include "TTree.h"
@@ -69,6 +70,7 @@ private:
     double _DeltaRMax;
     double _EjCut; // Cut of jet Energy
     double _RmCut; // Cut of Rm
+    float _DeltaRjlMax; // Cut of DeltaR{jet,lepton}
 
     // Variables fill to tree
     int _eventNum;
@@ -82,7 +84,16 @@ private:
     double _Rm;
     double _dMsM;
 
+    // constant
+    int Leptons[6];
+
     // run time variables
+    int NMCP; // element number of MCParticle
+    int MCPID;
+    float MCPEn;
+    float MCPP[3];
+    float MCPVertex[3];
+    int Vlepton_table_size;
     int NJetsNum;
     int alcfiplus; // Algorithm ID of lcfiplus
     int ibtag; // Parameter index of BTag
@@ -104,6 +115,7 @@ private:
 
     TLorentzVector Vj1;
     TLorentzVector Vj2;
+    
 };
 
 #endif

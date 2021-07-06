@@ -40,7 +40,7 @@ Exotic4b::Exotic4b()
         _deltaMCut,
         _deltaMCut);
 
-    _DeltaRMax=1; // GeV
+    _DeltaRMax=1;
     registerProcessorParameter( "DeltaRMax",
         "Delta R max. If set deltaMCut < 0, no cut.",
         _DeltaRMax,
@@ -57,6 +57,13 @@ Exotic4b::Exotic4b()
         "Rm < RmCut",
         _RmCut,
         _RmCut);
+
+    _DeltaRjlMax=1;
+    registerProcessorParameter( "DeltaRjlMax",
+        "DeltaR_{jet,lepton}.If set < 0 turn off this cut.",
+        _DeltaRjlMax,
+        _DeltaRjlMax);
+
 }
 
 
@@ -112,6 +119,8 @@ void Exotic4b::init()
     _outputTree->Branch("j1Tag",&_j1Tag);
     _outputTree->Branch("j2Tag",&_j2Tag);
 
+    Leptons[0]=11; Leptons[1]=-11; Leptons[2]=13; Leptons[3]=-13; Leptons[4]=15; Leptons[5]=-15;
+
 }
 
 
@@ -125,16 +134,21 @@ void Exotic4b::processEvent( LCEvent *evtP )
         DoubleVec vjPy;
         DoubleVec vjPz;
         StringVec vjTag;
+        std::vector<TLorentzVector> Vlepton_table;
 
         // read lcio data
         try
         {
             // Get Collection
             LCCollection* colJet = evtP->getCollection(_colName);
+            LCCollection* MCPart = evtP->getCollection("MCParticle");
+            NMCP = MCPart->getNumberOfElements();
             NJetsNum = colJet->getNumberOfElements();
             _eventNum = evtP->getEventNumber();
+
             // check NJetsNum
             if ( NJetsNum != 4 ) return;
+
             // cut Energy of jets
             for (int i = 0; i < NJetsNum; i++)
             {
@@ -142,6 +156,35 @@ void Exotic4b::processEvent( LCEvent *evtP )
                 ReconstructedParticle* recP = dynamic_cast<ReconstructedParticle*>(colJet->getElementAt(i));
                 if ( recP->getEnergy() < _EjCut) return;
             }
+
+            // Get MCParticle
+            for(int i = 0; i < NMCP; i++)
+            {
+                MCParticle * a_MCP = dynamic_cast<MCParticle*>(MCPart->getElementAt(i));
+                if(a_MCP->getParents().size() == 0) continue;
+                
+                MCPID = a_MCP->getPDG();
+                int *p = std::find(Leptons, Leptons + 6, MCPID);
+                if(p == Leptons + 6) continue;
+
+                MCPVertex[0] = a_MCP->getVertex()[0];
+                MCPVertex[1] = a_MCP->getVertex()[1];
+                MCPVertex[2] = a_MCP->getVertex()[2];
+                if(MCPVertex[0] < 0.0001 && MCPVertex[1] < 0.0001 && MCPVertex[2] < 0.0001) continue;
+
+                MCPEn = a_MCP->getEnergy();
+                MCPP[0] = a_MCP->getMomentum()[0];
+                MCPP[1] = a_MCP->getMomentum()[1];
+                MCPP[2] = a_MCP->getMomentum()[2];
+                TLorentzVector Vlepton;
+                Vlepton.SetPxPyPzE( MCPP[0],
+                                    MCPP[1],
+                                    MCPP[2],
+                                    MCPEn);
+                Vlepton_table.push_back( Vlepton );
+            }
+            Vlepton_table_size = Vlepton_table.size();
+
             // Handle PID information
             PIDHandler pidH (colJet);
             // Get algorithm IDs
@@ -181,6 +224,25 @@ void Exotic4b::processEvent( LCEvent *evtP )
             }
         }catch (lcio::DataNotAvailableException err) {}
         
+        // exclude lepton jet
+        if ( _DeltaRjlMax >=0 )
+        {
+            for (int i = 0; i < NJetsNum; i++)
+            {
+                Vj1.SetPxPyPzE( vjPx[i],
+                                vjPy[i],
+                                vjPz[i],
+                                vjE[i]);
+
+                for (int j = 0; j < Vlepton_table_size; j++)
+                {
+                    float DeltaRjl = Vj1.DeltaR(Vlepton_table.at(j));
+                    if ( DeltaRjl < _DeltaRjlMax ) return;
+                }
+            }
+        }
+
+
         // reconstruct singlet scaler
         for (int i = 0; i < NJetsNum; i++)
         {
