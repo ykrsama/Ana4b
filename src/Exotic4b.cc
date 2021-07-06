@@ -297,9 +297,17 @@ void Exotic4b::processEvent( LCEvent *evtP )
         }
         if ( _deltaMCut >=0 && _deltaM >= _deltaMCut ) return;
 
+        // check Rm
         _Rm = getRm(jIndex[0], jIndex[1], jIndex[2], jIndex[3]);
         if ( _Rm >= _RmCut ) return;
-        
+
+        // check DeltaR_jj
+        if ( _DeltaRMax >=0 )
+        {
+            if ( DeltaRjj[ jIndex[0] ][ jIndex[1] ] >= _DeltaRMax ) return;
+            if ( DeltaRjj[ jIndex[2] ][ jIndex[3] ] >= _DeltaRMax ) return;
+        }
+
         // fill the first singlet
         for (int i = 0; i < 4; i += 2)
         {
@@ -308,8 +316,6 @@ void Exotic4b::processEvent( LCEvent *evtP )
             
             _h1InvMass = Mjj[ j1I ][ j2I ];
             _DeltaR = DeltaRjj[ j1I ][ j2I ];
-
-            if ( _DeltaRMax >=0 && _DeltaR >=  _DeltaRMax ) return;
 
             _j1Tag = vjTag[ j1I ];
             _j2Tag = vjTag[ j2I ];
