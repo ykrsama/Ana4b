@@ -170,7 +170,7 @@ void Exotic4b::processEvent( LCEvent *evtP )
                 MCPVertex[0] = a_MCP->getVertex()[0];
                 MCPVertex[1] = a_MCP->getVertex()[1];
                 MCPVertex[2] = a_MCP->getVertex()[2];
-                if(MCPVertex[0] < 0.0001 && MCPVertex[1] < 0.0001 && MCPVertex[2] < 0.0001) continue;
+                if(MCPVertex[0] > 0.0001 || MCPVertex[1] > 0.0001 || MCPVertex[2] > 0.0001) continue;
 
                 MCPEn = a_MCP->getEnergy();
                 MCPP[0] = a_MCP->getMomentum()[0];
