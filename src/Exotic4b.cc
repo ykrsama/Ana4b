@@ -22,6 +22,8 @@ Exotic4b::Exotic4b()
         _treeName,
         _treeName);
 
+    _treeName2 = "bg2j";
+
     _colName = "RefinedJets";
     registerProcessorParameter( "CollctionName",
         "The name of Jet Collection.",
@@ -73,14 +75,14 @@ Exotic4b::~Exotic4b()
 }
 
 
-double Exotic4b::getMassjj(  double j1E,
-                double j1Px,
-                double j1Py,
-                double j1Pz,
-                double j2E,
-                double j2Px,
-                double j2Py,
-                double j2Pz)
+double Exotic4b::getMassjj( double j1E,
+                            double j1Px,
+                            double j1Py,
+                            double j1Pz,
+                            double j2E,
+                            double j2Px,
+                            double j2Py,
+                            double j2Pz)
 {
     double Ejj = j1E + j2E;
     double Pjjx = j1Px + j2Px;
@@ -119,6 +121,12 @@ void Exotic4b::init()
     _outputTree->Branch("j1Tag",&_j1Tag);
     _outputTree->Branch("j2Tag",&_j2Tag);
 
+    _outputTree2 = new TTree(_treeName2.c_str(), _treeName2.c_str() );
+    _outputTree2->Branch("h2InvMass", &_h2InvMass);
+    _outputTree2->Branch("DeltaR", &_DeltaR);
+    _outputTree2->Branch("j1Tag",&_j1Tag);
+    _outputTree2->Branch("j2Tag",&_j2Tag);
+
     Leptons[0]=11; Leptons[1]=-11; Leptons[2]=13; Leptons[3]=-13; Leptons[4]=15; Leptons[5]=-15;
 
 }
@@ -145,9 +153,6 @@ void Exotic4b::processEvent( LCEvent *evtP )
             NMCP = MCPart->getNumberOfElements();
             NJetsNum = colJet->getNumberOfElements();
             _eventNum = evtP->getEventNumber();
-
-            // check NJetsNum
-            if ( NJetsNum != 4 ) return;
 
             // cut Energy of jets
             for (int i = 0; i < NJetsNum; i++)
@@ -242,90 +247,114 @@ void Exotic4b::processEvent( LCEvent *evtP )
             }
         }
 
-
-        // reconstruct singlet scaler
-        for (int i = 0; i < NJetsNum; i++)
-        {
-            for (int j = i + 1; j < NJetsNum; j++)
+        if ( NJetsNum == 4 ) {
+            // reconstruct singlet scaler
+            for (int i = 0; i < NJetsNum; i++)
             {
-                // mass jj
-                Mjj[i][j] = getMassjj(vjE.at(i),
-                                    vjPx.at(i),
-                                    vjPy.at(i),
-                                    vjPz.at(i),
-                                    vjE.at(j),
-                                    vjPx.at(j),
-                                    vjPy.at(j),
-                                    vjPz.at(j));
-                // calculate deltaR
-                Vj1.SetPxPyPzE( vjPx[ i ],
-                                vjPy[ i ],
-                                vjPz[ i ],
-                                vjE[ i ]);
-                Vj2.SetPxPyPzE( vjPx[ j ],
-                                vjPy[ j ],
-                                vjPz[ j ],
-                                vjE[ j ]);
-                DeltaRjj[i][j] = Vj1.DeltaR(Vj2);
+                for (int j = i + 1; j < NJetsNum; j++)
+                {
+                    // mass jj
+                    Mjj[i][j] = getMassjj(vjE.at(i),
+                                        vjPx.at(i),
+                                        vjPy.at(i),
+                                        vjPz.at(i),
+                                        vjE.at(j),
+                                        vjPx.at(j),
+                                        vjPy.at(j),
+                                        vjPz.at(j));
+                    // calculate deltaR
+                    Vj1.SetPxPyPzE( vjPx[ i ],
+                                    vjPy[ i ],
+                                    vjPz[ i ],
+                                    vjE[ i ]);
+                    Vj2.SetPxPyPzE( vjPx[ j ],
+                                    vjPy[ j ],
+                                    vjPz[ j ],
+                                    vjE[ j ]);
+                    DeltaRjj[i][j] = Vj1.DeltaR(Vj2);
+                }
+            }
+
+            _deltaM = getDeltaM(0, 1, 2, 3);
+            //_dMsM = getdMsM(0, 1, 2, 3);
+            jIndex[0] = 0;
+            jIndex[1] = 1;
+            jIndex[2] = 2;
+            jIndex[3] = 3;
+            if ( getDeltaM(0, 2, 1, 3) < _deltaM )
+            //if ( getdMsM(0, 2, 1, 3) < _dMsM )
+            {
+                _deltaM = getDeltaM(0, 2, 1, 3);
+                //_dMsM = getdMsM(0, 2, 1, 3);
+                jIndex[0] = 0;
+                jIndex[1] = 2;
+                jIndex[2] = 1;
+                jIndex[3] = 3;
+            }
+            if ( getDeltaM(0, 3, 1, 2) < _deltaM )
+            //if ( getdMsM(0, 3, 1, 2) < _dMsM )
+            {
+                _deltaM = getDeltaM(0, 3, 1, 2);
+                //_dMsM = getdMsM(0, 3, 1, 2);
+                jIndex[0] = 0;
+                jIndex[1] = 3;
+                jIndex[2] = 1;
+                jIndex[3] = 2;
+            }
+            if ( _deltaMCut >=0 && _deltaM >= _deltaMCut ) return;
+
+            // check Rm
+            _Rm = getRm(jIndex[0], jIndex[1], jIndex[2], jIndex[3]);
+            if ( _Rm >= _RmCut ) return;
+
+            // check DeltaR_jj
+            if ( _DeltaRMax >=0 )
+            {
+                if ( DeltaRjj[ jIndex[0] ][ jIndex[1] ] >= _DeltaRMax ) return;
+                if ( DeltaRjj[ jIndex[2] ][ jIndex[3] ] >= _DeltaRMax ) return;
+            }
+
+            // fill the first singlet
+            for (int i = 0; i < 4; i += 2)
+            {
+                j1I = jIndex[i];
+                j2I = jIndex[i + 1];
+
+                _h1InvMass = Mjj[ j1I ][ j2I ];
+                _DeltaR = DeltaRjj[ j1I ][ j2I ];
+
+                _j1Tag = vjTag[ j1I ];
+                _j2Tag = vjTag[ j2I ];
+
+                _outputTree->Fill();
             }
         }
-        _deltaM = getDeltaM(0, 1, 2, 3);
-        //_dMsM = getdMsM(0, 1, 2, 3);
-        jIndex[0] = 0;
-        jIndex[1] = 1;
-        jIndex[2] = 2;
-        jIndex[3] = 3;
-        if ( getDeltaM(0, 2, 1, 3) < _deltaM )
-        //if ( getdMsM(0, 2, 1, 3) < _dMsM )
+
+        if ( NJetsNum == 2 )
         {
-            _deltaM = getDeltaM(0, 2, 1, 3);
-            //_dMsM = getdMsM(0, 2, 1, 3);
-            jIndex[0] = 0;
-            jIndex[1] = 2;
-            jIndex[2] = 1;
-            jIndex[3] = 3;
+            _h2InvMass = getMassjj( vjE.at(0),
+                                    vjPx.at(0),
+                                    vjPy.at(0),
+                                    vjPz.at(0),
+                                    vjE.at(1),
+                                    vjPx.at(1),
+                                    vjPy.at(1),
+                                    vjPz.at(1));
+            Vj1.SetPxPyPzE( vjPx.at(0),
+                            vjPy.at(0),
+                            vjPz.at(0),
+                            vjE.at(0) );
+            Vj2.SetPxPyPzE( vjPx.at(1),
+                            vjPy.at(1),
+                            vjPz.at(1),
+                            vjE.at(1));
+            _DeltaR = Vj1.DeltaR(Vj2);
+            _j1Tag = vjTag.at(0);
+            _j2Tag = vjTag.at(1);
+
+            _outputTree2->Fill();
         }
-        if ( getDeltaM(0, 3, 1, 2) < _deltaM )
-        //if ( getdMsM(0, 3, 1, 2) < _dMsM )
-        {
-            _deltaM = getDeltaM(0, 3, 1, 2);
-            //_dMsM = getdMsM(0, 3, 1, 2);
-            jIndex[0] = 0;
-            jIndex[1] = 3;
-            jIndex[2] = 1;
-            jIndex[3] = 2;
-        }
-        if ( _deltaMCut >=0 && _deltaM >= _deltaMCut ) return;
-
-        // check Rm
-        _Rm = getRm(jIndex[0], jIndex[1], jIndex[2], jIndex[3]);
-        if ( _Rm >= _RmCut ) return;
-
-        // check DeltaR_jj
-        if ( _DeltaRMax >=0 )
-        {
-            if ( DeltaRjj[ jIndex[0] ][ jIndex[1] ] >= _DeltaRMax ) return;
-            if ( DeltaRjj[ jIndex[2] ][ jIndex[3] ] >= _DeltaRMax ) return;
-        }
-
-        // fill the first singlet
-        for (int i = 0; i < 4; i += 2)
-        {
-            j1I = jIndex[i];
-            j2I = jIndex[i + 1];
-            
-            _h1InvMass = Mjj[ j1I ][ j2I ];
-            _DeltaR = DeltaRjj[ j1I ][ j2I ];
-
-            _j1Tag = vjTag[ j1I ];
-            _j2Tag = vjTag[ j2I ];
-
-            _outputTree->Fill();
-        }
-        
-
     }
-
 }
 
 

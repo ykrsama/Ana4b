@@ -28,6 +28,15 @@ public:
     void init();
 
     void processEvent( LCEvent * evtP );
+
+    void end();
+
+
+protected:
+    // ROOT related
+    TFile *tree_files;
+    TTree *_outputTree;
+    TTree
 };
 
 #endif

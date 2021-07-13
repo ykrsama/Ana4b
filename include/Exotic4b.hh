@@ -59,10 +59,12 @@ private:
     // ROOT related
     TFile *tree_file;
     TTree *_outputTree;
+    TTree* _outputTree2;
 
     // Processor Parameters
     std::string _treeFileName;
     std::string _treeName;
+    std::string _treeName2;
     std::string _colName;
     std::ostream _output;
     int _overwrite;
@@ -75,6 +77,7 @@ private:
     // Variables fill to tree
     int _eventNum;
     double _h1InvMass; // invariant mass of h1 (singlet)
+    double _h2InvMass; // invariant mass of h2 (SM-higgs)
     double _DeltaR; // DeltaR of j1 j2
     std::string _j1Tag; // Tag of j1
     std::string _j2Tag; // Tag of j2
