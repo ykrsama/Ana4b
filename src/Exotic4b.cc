@@ -65,6 +65,18 @@ Exotic4b::Exotic4b()
         "DeltaR_{jet,lepton}.If set < 0 turn off this cut.",
         _DeltaRjlMax,
         _DeltaRjlMax);
+    
+    _NJet=4;
+    registerProcessorParameter( "NJet",
+        "Number of jets in reco level.",
+        _NJet,
+        _NJet);
+
+    _YijCut = 1;
+    registerProcessorParameter( "YijCut",
+        "If there are some Yij that is greater than YijCut, this number shoud be NJet / 2. Otherwise discard this event.",
+        _YijCut,
+        _YijCut);
 
 }
 
@@ -120,6 +132,18 @@ void Exotic4b::init()
     _outputTree->Branch("DeltaR", &_DeltaR);
     _outputTree->Branch("j1Tag",&_j1Tag);
     _outputTree->Branch("j2Tag",&_j2Tag);
+    // Algorithm yth parameters
+    _outputTree->Branch("y01", &_y01);
+    _outputTree->Branch("y12", &_y12);
+    _outputTree->Branch("y23", &_y23);
+    _outputTree->Branch("y34", &_y34);
+    _outputTree->Branch("y45", &_y45);
+    _outputTree->Branch("y56", &_y56);
+    _outputTree->Branch("y67", &_y67);
+    _outputTree->Branch("y78", &_y78);
+    _outputTree->Branch("y89", &_y89);
+    _outputTree->Branch("y910", &_y910);
+
 
     _outputTree2 = new TTree(_treeName2.c_str(), _treeName2.c_str() );
     _outputTree2->Branch("h2InvMass", &_h2InvMass);
@@ -127,7 +151,9 @@ void Exotic4b::init()
     _outputTree2->Branch("j1Tag",&_j1Tag);
     _outputTree2->Branch("j2Tag",&_j2Tag);
 
+    // init constants
     Leptons[0]=11; Leptons[1]=-11; Leptons[2]=13; Leptons[3]=-13; Leptons[4]=15; Leptons[5]=-15;
+
 
 }
 
@@ -142,6 +168,8 @@ void Exotic4b::processEvent( LCEvent *evtP )
         DoubleVec vjPy;
         DoubleVec vjPz;
         StringVec vjTag;
+        IntVec iyth; // Parameter index of yth (iyth[0]=iy01, iyth[1]=iy12);
+        FloatVec yth; // size = 10, yth values
         std::vector<TLorentzVector> Vlepton_table;
 
         // read lcio data
@@ -194,9 +222,17 @@ void Exotic4b::processEvent( LCEvent *evtP )
             PIDHandler pidH (colJet);
             // Get algorithm IDs
             alcfiplus = pidH.getAlgorithmID("lcfiplus");
+            ayth = pidH.getAlgorithmID("yth");
             // Get lcfiplus parameter indicies
             ibtag = pidH.getParameterIndex(alcfiplus, "BTag");
             ictag = pidH.getParameterIndex(alcfiplus, "CTag");
+            // get yth parameter indices
+            for (int i = 0; i < 10; i++ )
+            {
+                std::stringstream ss;
+                ss << "y" << i << (i + 1);
+                iyth.push_back( pidH.getParameterIndex(ayth, ss.str() ) );
+            }
             // Get jets PID
             for (int i = 0; i < NJetsNum; i++)
             {
@@ -212,6 +248,35 @@ void Exotic4b::processEvent( LCEvent *evtP )
                 bTag = pid_lcfiplus.getParameters()[ibtag];
                 cTag = pid_lcfiplus.getParameters()[ictag];
                 lTag = 1 - bTag - cTag;
+                // handling yth parameters
+                if (i == 0)
+                {   
+                    // get yth parameters
+                    const ParticleID &pid_yth = pidH.getParticleID(recP, ayth);
+                    for (int j = 0; j < 10; j++)
+                    {
+                        yth.push_back( pid_yth.getParameters()[ iyth.at(j) ]  );
+                    }
+                    // count Yij
+                    int countYij = 0;
+                    for ( int j = 0; j < 10; j++ )
+                    {
+                        if ( yth.at(j) > _YijCut ) countYij++;
+                    }
+                    if ( countYij != _NJet / 2 ) return;
+                    // save to tree
+                    _y01  = yth.at(0);
+                    _y12  = yth.at(1);
+                    _y23  = yth.at(2);
+                    _y34  = yth.at(3);
+                    _y45  = yth.at(4);
+                    _y56  = yth.at(5);
+                    _y67  = yth.at(6);
+                    _y78  = yth.at(7);
+                    _y89  = yth.at(8);
+                    _y910 = yth.at(9);
+                }
+
                 // find most likely jet tag
                 tempTagParam = bTag;
                 tempTag = "b";

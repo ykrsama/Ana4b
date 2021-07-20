@@ -73,6 +73,8 @@ private:
     double _EjCut; // Cut of jet Energy
     double _RmCut; // Cut of Rm
     float _DeltaRjlMax; // Cut of DeltaR{jet,lepton}
+    float _NJet;
+    float _YijCut;
 
     // Variables fill to tree
     int _eventNum;
@@ -86,6 +88,17 @@ private:
     double _deltaM;
     double _Rm;
     double _dMsM;
+    // algorithm yth parameters
+    float _y01;
+    float _y12;
+    float _y23;
+    float _y34;
+    float _y45;
+    float _y56;
+    float _y67;
+    float _y78;
+    float _y89;
+    float _y910;
 
     // constant
     int Leptons[6];
@@ -99,6 +112,7 @@ private:
     int Vlepton_table_size;
     int NJetsNum;
     int alcfiplus; // Algorithm ID of lcfiplus
+    int ayth; // Algorithm ID of yth
     int ibtag; // Parameter index of BTag
     int ictag; // Parameter index of CTag
     int iltag; // value of light jet param
