@@ -99,6 +99,7 @@ private:
     float _y78;
     float _y89;
     float _y910;
+    int _countYij;
 
     // constant
     int Leptons[6];

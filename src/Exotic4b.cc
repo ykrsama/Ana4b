@@ -143,6 +143,7 @@ void Exotic4b::init()
     _outputTree->Branch("y78", &_y78);
     _outputTree->Branch("y89", &_y89);
     _outputTree->Branch("y910", &_y910);
+    _outputTree->Branch("countYij", &_countYij);
 
 
     _outputTree2 = new TTree(_treeName2.c_str(), _treeName2.c_str() );
@@ -258,12 +259,12 @@ void Exotic4b::processEvent( LCEvent *evtP )
                         yth.push_back( pid_yth.getParameters()[ iyth.at(j) ]  );
                     }
                     // count Yij
-                    int countYij = 0;
+                    _countYij = 0;
                     for ( int j = 0; j < 10; j++ )
                     {
-                        if ( yth.at(j) > _YijCut ) countYij++;
+                        if ( yth.at(j) > _YijCut ) _countYij++;
                     }
-                    if ( countYij != _NJet / 2 ) return;
+                    //if ( _countYij != _NJet / 2 ) return;
                     // save to tree
                     _y01  = yth.at(0);
                     _y12  = yth.at(1);
@@ -290,6 +291,8 @@ void Exotic4b::processEvent( LCEvent *evtP )
                     tempTagParam = lTag;
                     tempTag = "l";
                 }
+                // check jTag
+                if ( tempTag == "l" ) return;
                 vjTag.push_back( tempTag );
             }
         }catch (lcio::DataNotAvailableException err) {}
