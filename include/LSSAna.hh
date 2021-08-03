@@ -40,7 +40,10 @@ public:
 private:
 
     double getInvMass(MCParticle* part1, MCParticle* part2);
-    //double getInvMass(ReconstructedParticle* part1, ReconstructedParticle* part2) override;
+    double getInvMass(ReconstructedParticle* part1, ReconstructedParticle* part2);
+
+    TLorentzVector getTLorentzVector(MCParticle* part);
+    TLorentzVector getTLorentzVector(ReconstructedParticle* part);
 
     double getMassjj(  double j1E,
                     double j1Px,
@@ -56,9 +59,40 @@ private:
 
     double getRm( int j1, int j2, int j3, int j4 ) { return fabs( ( Mjj[j1][j2] - Mjj[j3][j4] ) / ( Mjj[j1][j2] + Mjj[j3][j4] ) ); };
 
-    bool lessDeltaRjl(const ReconstructedParticle* part1, const ReconstructedParticle* part2);
+    struct {
+        bool operator()(const ReconstructedParticle *part1, const ReconstructedParticle *part2) {
+            TLorentzVector Vjet1;
+            TLorentzVector Vjet2;
+            Vjet1.SetPxPyPzE(   part1->getMomentum()[0],
+                                part1->getMomentum()[1],
+                                part1->getMomentum()[2],
+                                part1->getEnergy());
+            Vjet2.SetPxPyPzE(   part2->getMomentum()[0],
+                                part2->getMomentum()[1],
+                                part2->getMomentum()[3],
+                                part2->getEnergy());
+            double DeltaRlj1 = std::min( Vjet1.DeltaR(Vl[0]), Vjet1.DeltaR(Vl[1]) );
+            double DeltaRlj2 = std::min( Vjet2.DeltaR(Vl[0]), Vjet2.DeltaR(Vl[1]) );
 
-    bool greaterPT(const ReconstructedParticle* part1, const ReconstructedParticle* part2);
+            return ( DeltaRlj1 < DeltaRlj2 );
+        }
+    } lessDeltaRjl;
+
+    struct {
+        bool operator()(const ReconstructedParticle *part1, const ReconstructedParticle *part2) {
+            TLorentzVector Vpart1;
+            TLorentzVector Vpart2;
+            Vpart1.SetPxPyPzE(  part1->getMomentum()[0],
+                                part1->getMomentum()[1],
+                                part1->getMomentum()[2],
+                                part1->getEnergy());
+            Vpart2.SetPxPyPzE(   part2->getMomentum()[0],
+                                part2->getMomentum()[1],
+                                part2->getMomentum()[3],
+                                part2->getEnergy());
+            return (Vpart1.Pt() > Vpart2.Pt());
+        }
+    } greaterPT ;
 
 private:
     // ROOT related
@@ -133,8 +167,8 @@ private:
     ReconstructedParticle* leptonJets[2];
     ReconstructedParticle* realJets[4];
 
-    TLorentzVector Vl[2];
-    TLorentzVector Vj[2];
+    static TLorentzVector Vl[2];
+    static TLorentzVector Vj[2];
     
 };
 
