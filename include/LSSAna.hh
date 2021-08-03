@@ -38,6 +38,10 @@ public:
     void end();
 
 private:
+
+    double getInvMass(MCParticle* part1, MCParticle* part2);
+    //double getInvMass(ReconstructedParticle* part1, ReconstructedParticle* part2) override;
+
     double getMassjj(  double j1E,
                     double j1Px,
                     double j1Py,
@@ -48,9 +52,13 @@ private:
                     double j2Pz );
 
 
-    //double getDeltaM( int j1, int j2, int j3, int j4) { return fabs( Mjj[j1][j2] - Mjj[j3][j4] ); };
+    double getDeltaM( int j1, int j2, int j3, int j4) { return fabs( Mjj[j1][j2] - Mjj[j3][j4] ); };
 
-    //double getRm( int j1, int j2, int j3, int j4 ) { return fabs( ( Mjj[j1][j2] - Mjj[j3][j4] ) / ( Mjj[j1][j2] + Mjj[j3][j4] ) ); };
+    double getRm( int j1, int j2, int j3, int j4 ) { return fabs( ( Mjj[j1][j2] - Mjj[j3][j4] ) / ( Mjj[j1][j2] + Mjj[j3][j4] ) ); };
+
+    bool lessDeltaRjl(const ReconstructedParticle* part1, const ReconstructedParticle* part2);
+
+    bool greaterPT(const ReconstructedParticle* part1, const ReconstructedParticle* part2);
 
 private:
     // ROOT related
@@ -85,7 +93,16 @@ private:
     double fmrecoil;
     double fdelta_mll_mz;
     double fdelta_mrecoil_mh;
-    double fleading_jet_pT;
+    double fjet0_pT;
+    double fjet0_E;
+    double fjet1_pT;
+    double fjet1_E;
+    double fjet2_pT;
+    double fjet2_E;
+    double fjet3_pT;
+    double fjet3_E;
+
+    bool ffound_Zlepton;
 
     // jet
     DoubleVec fvjTag;
@@ -97,11 +114,28 @@ private:
     double fDletaRjj;
     std::string fj1Tag;
     std::string fj2Tag;
+    double Mjj[4][4]; // matrix of massjj. Is a upper triangular matrix.
 
-    
+    // constant
+    int Leptons[6];
+
     // run time vars
+    int NMCP; // element number of MCParticle
+    MCParticle* Zleptons[2]; // two leptons from Z
 
-    double h1InvMass;
+    int alcfiplus; // Algorithm ID of lcfiplus
+    int ayth; // Algorithm ID of yth
+    int ibtag; // Parameter index of BTag
+    int ictag; // Parameter index of CTag
+    int iltag; // value of light jet param
+    int icategory; // Parameter index of Category
+    int NJetsNum; // element number of Jets
+    ReconstructedParticle* leptonJets[2];
+    ReconstructedParticle* realJets[4];
+
+    TLorentzVector Vl[2];
+    TLorentzVector Vj[2];
+    
 };
 
 #endif
