@@ -75,7 +75,7 @@ private:
             double DeltaRlj2 = std::min( Vjet2.DeltaR(Vl[0]), Vjet2.DeltaR(Vl[1]) );
 
             return ( DeltaRlj1 < DeltaRlj2 );
-        }
+        };
     } lessDeltaRjl;
 
     struct {
@@ -91,7 +91,7 @@ private:
                                 part2->getMomentum()[3],
                                 part2->getEnergy());
             return (Vpart1.Pt() > Vpart2.Pt());
-        }
+        };
     } greaterPT ;
 
 private:

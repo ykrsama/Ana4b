@@ -16,13 +16,13 @@ LSSAna::LSSAna() : Processor("LSSAna"),
         ftree_file_name);
 
     fevent_tree_name = "event";
-    registerProcessorParameter("ThreeName",
+    registerProcessorParameter("EventThreeName",
         "event level",
         fevent_tree_name,
         fevent_tree_name);
 
     frech1_tree_name = "rech1";
-    registerProcessorParameter("rech1",
+    registerProcessorParameter("rech1TreeName",
         "reconstructed h1",
         frech1_tree_name,
         frech1_tree_name);
@@ -46,7 +46,7 @@ LSSAna::LSSAna() : Processor("LSSAna"),
 }
 
 LSSAna::~LSSAna() {
-
+    delete ptree_file;
 }
 
 void LSSAna::init() {
@@ -159,18 +159,48 @@ void LSSAna::processEvent( LCEvent *evtP ) {
         realJets[3] = vAllJets.at(5);
         std::vector<ReconstructedParticle*> vRealJets(realJets, realJets + 4);
         std::sort(vRealJets.begin(), vRealJets.end(), greaterPT);
+        std::vector<TLorentzVector> Vj;
+        for (int i = 0; i > 4; i++) {
+            Vj.push_back(getTLorentzVector(vRealJets.at(i)));
+        }
+        fjet0_pT = Vj[0].Pt();
+        fjet1_pT = Vj[1].Pt();
+        fjet2_pT = Vj[2].Pt();
+        fjet3_pT = Vj[3].Pt();
+        fjet0_E = Vj[0].E();
+        fjet1_E = Vj[1].E();
+        fjet2_E = Vj[2].E();
+        fjet3_E = Vj[3].E();
 
-        
+        pevent_tree->Fill();
+
     }
 
 
 }
 
 void LSSAna::end() {
+    if (pevent_tree)
+    {
+        ptree_file = pevent_tree->GetCurrentFile(); // just in case we switched to a new file.
+        ptree_file->Write();
+    }
 
+    delete ptree_file;
 }
 
 double LSSAna::getInvMass(MCParticle* part1, MCParticle* part2) {
+    double E12 = part1->getEnergy() + part2->getEnergy();
+    double P12x = part1->getMomentum()[0] + part2->getMomentum()[0];
+    double P12y = part1->getMomentum()[1] + part2->getMomentum()[1];
+    double P12z = part1->getMomentum()[2] + part2->getMomentum()[2];
+    double P12sqr = P12x * P12x + P12y * P12y + P12z * P12z;
+    double M12 = sqrt( E12 * E12 - P12sqr );
+
+    return M12;
+}
+
+double LSSAna::getInvMass(ReconstructedParticle* part1, ReconstructedParticle* part2) {
     double E12 = part1->getEnergy() + part2->getEnergy();
     double P12x = part1->getMomentum()[0] + part2->getMomentum()[0];
     double P12y = part1->getMomentum()[1] + part2->getMomentum()[1];
