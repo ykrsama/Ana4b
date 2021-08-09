@@ -39,11 +39,11 @@ public:
 
 private:
 
-    double getInvMass(MCParticle* part1, MCParticle* part2);
-    double getInvMass(ReconstructedParticle* part1, ReconstructedParticle* part2);
+    double getMCInvMass(MCParticle* part1, MCParticle* part2);
+    double getReInvMass(ReconstructedParticle* part1, ReconstructedParticle* part2);
 
-    TLorentzVector getTLorentzVector(MCParticle* part);
-    TLorentzVector getTLorentzVector(ReconstructedParticle* part);
+    TLorentzVector getMCTLorentzVector(MCParticle* part);
+    TLorentzVector getReTLorentzVector(ReconstructedParticle* part);
 
     double getMassjj(  double j1E,
                     double j1Px,
@@ -59,54 +59,27 @@ private:
 
     double getRm( int j1, int j2, int j3, int j4 ) { return fabs( ( Mjj[j1][j2] - Mjj[j3][j4] ) / ( Mjj[j1][j2] + Mjj[j3][j4] ) ); };
 
-    struct {
-        bool operator()(const ReconstructedParticle *part1, const ReconstructedParticle *part2) {
-            TLorentzVector Vjet1;
-            TLorentzVector Vjet2;
-            Vjet1.SetPxPyPzE(   part1->getMomentum()[0],
-                                part1->getMomentum()[1],
-                                part1->getMomentum()[2],
-                                part1->getEnergy());
-            Vjet2.SetPxPyPzE(   part2->getMomentum()[0],
-                                part2->getMomentum()[1],
-                                part2->getMomentum()[3],
-                                part2->getEnergy());
-            double DeltaRlj1 = std::min( Vjet1.DeltaR(Vl[0]), Vjet1.DeltaR(Vl[1]) );
-            double DeltaRlj2 = std::min( Vjet2.DeltaR(Vl[0]), Vjet2.DeltaR(Vl[1]) );
+    bool lessDeltaRjl(ReconstructedParticle *part1, ReconstructedParticle *part2);
 
-            return ( DeltaRlj1 < DeltaRlj2 );
-        };
-    } lessDeltaRjl;
+    bool greaterPT(ReconstructedParticle *part1, ReconstructedParticle *part2);
 
-    struct {
-        bool operator()(const ReconstructedParticle *part1, const ReconstructedParticle *part2) {
-            TLorentzVector Vpart1;
-            TLorentzVector Vpart2;
-            Vpart1.SetPxPyPzE(  part1->getMomentum()[0],
-                                part1->getMomentum()[1],
-                                part1->getMomentum()[2],
-                                part1->getEnergy());
-            Vpart2.SetPxPyPzE(   part2->getMomentum()[0],
-                                part2->getMomentum()[1],
-                                part2->getMomentum()[3],
-                                part2->getEnergy());
-            return (Vpart1.Pt() > Vpart2.Pt());
-        };
-    } greaterPT ;
+    std::vector<ReconstructedParticle*> sortLessDeltaRjl(std::vector<ReconstructedParticle*> &ivec);
+    
+    std::vector<ReconstructedParticle*> sortGreaterPT(std::vector<ReconstructedParticle*> &ivec);
 
 private:
     // ROOT related
-    TFile* ptree_file;
-    TTree* pevent_tree;
-    TTree* prech1_tree;
+    TFile* tree_file;
+    TTree* _outputTree_event;
+    TTree* _outputTree_rech1;
 
     // Processor Parameters
-    std::string ftree_file_name;
-    std::string fevent_tree_name;
-    std::string frech1_tree_name;
-    std::string fcol_name;
-    std::ostream foutput;
-    int foverwrite;
+    std::string _treeFileName;
+    std::string _treeName_event;
+    std::string _treeName_rech1;
+    std::string _colName;
+    std::ostream _output;
+    int _overwrite;
     int fNJet;
 
     // Vars fill to tree
@@ -167,8 +140,8 @@ private:
     ReconstructedParticle* leptonJets[2];
     ReconstructedParticle* realJets[4];
 
-    static TLorentzVector Vl[2];
-    static TLorentzVector Vj[2];
+    TLorentzVector Vl[2];
+    TLorentzVector Vj[2];
     
 };
 

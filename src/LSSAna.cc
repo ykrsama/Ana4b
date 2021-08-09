@@ -3,82 +3,84 @@
 LSSAna LSSAna_instance;
 
 LSSAna::LSSAna() : Processor("LSSAna"),
-                   foutput(0),
-                   fmll(0),
-                   fdelta_mll_mz(91.1876),
-                   ffound_Zlepton(false) {
+                   _output(0) {
     _description = "LSS Ana";
 
-    ftree_file_name = "LSSAna.root";
+    _treeFileName = "LSSAna.root";
     registerProcessorParameter("TreeOutputFile",
         "The name of the file to which the ROOT tree will be written",
-        ftree_file_name,
-        ftree_file_name);
+        _treeFileName,
+        _treeFileName);
 
-    fevent_tree_name = "event";
+    _treeName_event = "event";
     registerProcessorParameter("EventThreeName",
         "event level",
-        fevent_tree_name,
-        fevent_tree_name);
+        _treeName_event,
+        _treeName_event);
 
-    frech1_tree_name = "rech1";
+    _treeName_rech1 = "rech1";
     registerProcessorParameter("rech1TreeName",
         "reconstructed h1",
-        frech1_tree_name,
-        frech1_tree_name);
+        _treeName_rech1,
+        _treeName_rech1);
 
-    fcol_name = "RefinedJets";
+    _colName = "RefinedJets";
     registerProcessorParameter( "CollectionName",
         "The name of Jet Collection.",
-        fcol_name,
-        fcol_name);
+        _colName,
+        _colName);
 
-    foverwrite = 1;
+    _overwrite = 1;
     registerProcessorParameter( "OverwriteFile",
         "If zero an already existing file will not be overwriteen.",
-        foverwrite,
-        foverwrite);
-    
-    // init constants
-    Leptons[0]=11; Leptons[1]=-11; Leptons[2]=13; Leptons[3]=-13; Leptons[4]=15; Leptons[5]=-15;
-    fmz = 91.1876; // PDG2020
-    fmh = 125.25;
+        _overwrite,
+        _overwrite);
 }
 
 LSSAna::~LSSAna() {
-    delete ptree_file;
+    delete tree_file;
 }
 
 void LSSAna::init() {
     printParameters();
 
-    ptree_file = new TFile(ftree_file_name.c_str(), (foverwrite ? "RECREATE" : "UPDATE") );
+    tree_file = new TFile(_treeFileName.c_str(), (_overwrite ? "RECREATE" : "UPDATE") );
 
-    if ( !ptree_file->IsOpen() ) {
-        delete ptree_file;
-        ptree_file = new TFile(ftree_file_name.c_str(), "NEW");
+    if ( !tree_file->IsOpen() ) {
+        delete tree_file;
+        tree_file = new TFile(_treeFileName.c_str(), "NEW");
     }
 
-    pevent_tree = new TTree( fevent_tree_name.c_str(), fevent_tree_name.c_str());
-    prech1_tree = new TTree( frech1_tree_name.c_str(), frech1_tree_name.c_str());
+    _outputTree_event = new TTree( _treeName_event.c_str(), _treeName_event.c_str());
+    _outputTree_rech1 = new TTree( _treeName_rech1.c_str(), _treeName_rech1.c_str());
 
     // Register Branch
-    pevent_tree->Branch("EventNum", &feventNum, "EventNum/I");
-    pevent_tree->Branch("Evisible", &fEvisible);
-    pevent_tree->Branch("Emiss", &fEmiss);
-    pevent_tree->Branch("Mll", &fmll);
-    pevent_tree->Branch("deltaMllMZ", &fdelta_mll_mz);
-    pevent_tree->Branch("Mrecoil", &fmrecoil);
-    pevent_tree->Branch("deltaMrecoilMH", &fdelta_mrecoil_mh);
+    _outputTree_event->Branch("EventNum", &feventNum, "EventNum/I");
+    _outputTree_event->Branch("Evisible", &fEvisible);
+    _outputTree_event->Branch("Emiss", &fEmiss);
+    _outputTree_event->Branch("Mll", &fmll);
+    _outputTree_event->Branch("deltaMllMZ", &fdelta_mll_mz);
+    _outputTree_event->Branch("Mrecoil", &fmrecoil);
+    _outputTree_event->Branch("deltaMrecoilMH", &fdelta_mrecoil_mh);
     // jets
-    pevent_tree->Branch("Jet0pT", &fjet0_pT);
-    pevent_tree->Branch("Jet1pT", &fjet1_pT);
-    pevent_tree->Branch("Jet2pT", &fjet2_pT);
-    pevent_tree->Branch("Jet3pT", &fjet3_pT);
-    pevent_tree->Branch("Jet0E", &fjet0_E);
-    pevent_tree->Branch("Jet1E", &fjet1_E);
-    pevent_tree->Branch("Jet2E", &fjet2_E);
-    pevent_tree->Branch("Jet3E", &fjet3_E);
+    _outputTree_event->Branch("Jet0pT", &fjet0_pT);
+    _outputTree_event->Branch("Jet1pT", &fjet1_pT);
+    _outputTree_event->Branch("Jet2pT", &fjet2_pT);
+    _outputTree_event->Branch("Jet3pT", &fjet3_pT);
+    _outputTree_event->Branch("Jet0E", &fjet0_E);
+    _outputTree_event->Branch("Jet1E", &fjet1_E);
+    _outputTree_event->Branch("Jet2E", &fjet2_E);
+    _outputTree_event->Branch("Jet3E", &fjet3_E);
+
+    _outputTree_rech1 = new TTree(_treeName_rech1.c_str(), _treeName_rech1.c_str());
+
+    // init constants
+    fmll = 0;
+    fdelta_mll_mz = 91.1876;
+    ffound_Zlepton = false;
+    Leptons[0]=11; Leptons[1]=-11; Leptons[2]=13; Leptons[3]=-13; Leptons[4]=15; Leptons[5]=-15;
+    fmz = 91.1876; // PDG2020
+    fmh = 125.25;
 
 }
 
@@ -91,7 +93,7 @@ void LSSAna::processEvent( LCEvent *evtP ) {
         std::vector<ReconstructedParticle*> vAllJets; //sorted by DeltaRjl
         // read lcio data
         try {
-            LCCollection* colJet = evtP->getCollection(fcol_name);
+            LCCollection* colJet = evtP->getCollection(_colName);
             LCCollection* MCPart = evtP->getCollection("MCParticle");
             NMCP = MCPart->getNumberOfElements();
             NJetsNum = colJet->getNumberOfElements();
@@ -109,7 +111,7 @@ void LSSAna::processEvent( LCEvent *evtP ) {
                     int MCPID_j = MCP_j->getPDG();
                     if (MCPID_j != -MCPID_i ) continue; // same flavor differnt charge
 
-                    double mll_temp = getInvMass(MCP_i, MCP_j);
+                    double mll_temp = getMCInvMass(MCP_i, MCP_j);
                     if ( abs( mll_temp - fmz ) < fdelta_mll_mz ) {
                         fmll = mll_temp;
                         fdelta_mll_mz = abs( fmll - fmz );
@@ -119,7 +121,7 @@ void LSSAna::processEvent( LCEvent *evtP ) {
                     }
                 }
             }
-            if (!ffound_Zlepton) return;
+            if ( ! ffound_Zlepton ) return;
 
             for (int i = 0; i < 2; i++){
                 Vl[i].SetPxPyPzE(   Zleptons[i]->getMomentum()[0],
@@ -150,7 +152,7 @@ void LSSAna::processEvent( LCEvent *evtP ) {
             }
         } catch (lcio::DataNotAvailableException err) {}
         // jets
-        std::sort(vAllJets.begin(), vAllJets.end(), lessDeltaRjl );
+        vAllJets = sortLessDeltaRjl(vAllJets);
         leptonJets[0] = vAllJets.at(0);
         leptonJets[1] = vAllJets.at(1);
         realJets[0] = vAllJets.at(2);
@@ -158,10 +160,10 @@ void LSSAna::processEvent( LCEvent *evtP ) {
         realJets[2] = vAllJets.at(4);
         realJets[3] = vAllJets.at(5);
         std::vector<ReconstructedParticle*> vRealJets(realJets, realJets + 4);
-        std::sort(vRealJets.begin(), vRealJets.end(), greaterPT);
+        vRealJets = sortGreaterPT(vRealJets);
         std::vector<TLorentzVector> Vj;
         for (int i = 0; i > 4; i++) {
-            Vj.push_back(getTLorentzVector(vRealJets.at(i)));
+            Vj.push_back(getReTLorentzVector(vRealJets.at(i)));
         }
         fjet0_pT = Vj[0].Pt();
         fjet1_pT = Vj[1].Pt();
@@ -172,7 +174,7 @@ void LSSAna::processEvent( LCEvent *evtP ) {
         fjet2_E = Vj[2].E();
         fjet3_E = Vj[3].E();
 
-        pevent_tree->Fill();
+        _outputTree_event->Fill();
 
     }
 
@@ -180,16 +182,16 @@ void LSSAna::processEvent( LCEvent *evtP ) {
 }
 
 void LSSAna::end() {
-    if (pevent_tree)
+    if (_outputTree_event)
     {
-        ptree_file = pevent_tree->GetCurrentFile(); // just in case we switched to a new file.
-        ptree_file->Write();
+        tree_file = _outputTree_event->GetCurrentFile(); // just in case we switched to a new file.
+        tree_file->Write();
     }
 
-    delete ptree_file;
+    delete tree_file;
 }
 
-double LSSAna::getInvMass(MCParticle* part1, MCParticle* part2) {
+double LSSAna::getMCInvMass(MCParticle* part1, MCParticle* part2) {
     double E12 = part1->getEnergy() + part2->getEnergy();
     double P12x = part1->getMomentum()[0] + part2->getMomentum()[0];
     double P12y = part1->getMomentum()[1] + part2->getMomentum()[1];
@@ -200,7 +202,7 @@ double LSSAna::getInvMass(MCParticle* part1, MCParticle* part2) {
     return M12;
 }
 
-double LSSAna::getInvMass(ReconstructedParticle* part1, ReconstructedParticle* part2) {
+double LSSAna::getReInvMass(ReconstructedParticle* part1, ReconstructedParticle* part2) {
     double E12 = part1->getEnergy() + part2->getEnergy();
     double P12x = part1->getMomentum()[0] + part2->getMomentum()[0];
     double P12y = part1->getMomentum()[1] + part2->getMomentum()[1];
@@ -211,7 +213,7 @@ double LSSAna::getInvMass(ReconstructedParticle* part1, ReconstructedParticle* p
     return M12;
 }
 
-TLorentzVector LSSAna::getTLorentzVector(MCParticle* part) {
+TLorentzVector LSSAna::getMCTLorentzVector(MCParticle* part) {
     TLorentzVector Vpart;
     Vpart.SetPxPyPzE(   part->getMomentum()[0],
                         part->getMomentum()[1],
@@ -220,11 +222,72 @@ TLorentzVector LSSAna::getTLorentzVector(MCParticle* part) {
     return Vpart;
 }
 
-TLorentzVector LSSAna::getTLorentzVector(ReconstructedParticle* part) {
+TLorentzVector LSSAna::getReTLorentzVector(ReconstructedParticle* part) {
     TLorentzVector Vpart;
     Vpart.SetPxPyPzE(   part->getMomentum()[0],
                         part->getMomentum()[1],
                         part->getMomentum()[2],
                         part->getEnergy());
     return Vpart;
+}
+
+bool LSSAna::lessDeltaRjl(ReconstructedParticle *part1, ReconstructedParticle *part2) {
+    TLorentzVector Vjet1;
+    TLorentzVector Vjet2;
+    Vjet1.SetPxPyPzE(   part1->getMomentum()[0],
+                        part1->getMomentum()[1],
+                        part1->getMomentum()[2],
+                        part1->getEnergy());
+    Vjet2.SetPxPyPzE(   part2->getMomentum()[0],
+                        part2->getMomentum()[1],
+                        part2->getMomentum()[3],
+                        part2->getEnergy());
+    double DeltaRlj1 = std::min( Vjet1.DeltaR( Vl[0] ), Vjet1.DeltaR( Vl[1] ) );
+    double DeltaRlj2 = std::min( Vjet2.DeltaR( Vl[0] ), Vjet2.DeltaR( Vl[1] ) );
+
+    return ( DeltaRlj1 < DeltaRlj2 );
+}
+
+bool LSSAna::greaterPT(ReconstructedParticle *part1, ReconstructedParticle *part2) {
+    TLorentzVector Vpart1;
+    TLorentzVector Vpart2;
+    Vpart1.SetPxPyPzE(  part1->getMomentum()[0],
+                        part1->getMomentum()[1],
+                        part1->getMomentum()[2],
+                        part1->getEnergy());
+    Vpart2.SetPxPyPzE(   part2->getMomentum()[0],
+                        part2->getMomentum()[1],
+                        part2->getMomentum()[3],
+                        part2->getEnergy());
+    return (Vpart1.Pt() > Vpart2.Pt());
+}
+
+std::vector<ReconstructedParticle*> LSSAna::sortLessDeltaRjl(std::vector<ReconstructedParticle*> &ivec) {
+      const int vsize = ivec.size();
+      for(int i=1; i<vsize; i++) {
+            for(int j = 0; j < vsize - i; j++) {
+                    if ( ! lessDeltaRjl( ivec[j], ivec[j+1] ) ) {
+                        ReconstructedParticle* temp;
+                        temp = ivec[j];
+                        ivec[j] = ivec[j+1];
+                        ivec[j+1] = temp;
+                    }
+             }
+        }
+      return ivec;
+}
+
+std::vector<ReconstructedParticle*> LSSAna::sortGreaterPT(std::vector<ReconstructedParticle*> &ivec) {
+      const int vsize = ivec.size();
+      for(int i=1; i<vsize; i++) {
+            for(int j = 0; j < vsize - i; j++) {
+                    if ( ! greaterPT( ivec[j], ivec[j+1] ) ) {
+                        ReconstructedParticle* temp;
+                        temp = ivec[j];
+                        ivec[j] = ivec[j+1];
+                        ivec[j+1] = temp;
+                    }
+             }
+        }
+      return ivec;
 }
