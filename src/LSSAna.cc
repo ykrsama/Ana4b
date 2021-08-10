@@ -75,9 +75,6 @@ void LSSAna::init() {
     _outputTree_rech1 = new TTree(_treeName_rech1.c_str(), _treeName_rech1.c_str());
 
     // init constants
-    fmll = 0;
-    fdelta_mll_mz = 91.1876;
-    ffound_Zlepton = false;
     Leptons[0]=11; Leptons[1]=-11; Leptons[2]=13; Leptons[3]=-13; Leptons[4]=15; Leptons[5]=-15;
     fmz = 91.1876; // PDG2020
     fmh = 125.25;
@@ -91,6 +88,10 @@ void LSSAna::processEvent( LCEvent *evtP ) {
         DoubleVec vJpT;
         DoubleVec vJE;
         std::vector<ReconstructedParticle*> vAllJets; //sorted by DeltaRjl
+        // init vars
+        fmll = 0;
+        fdelta_mll_mz = fmz;
+        ffound_Zlepton = false;
         // read lcio data
         try {
             LCCollection* colJet = evtP->getCollection(_colName);
@@ -121,16 +122,17 @@ void LSSAna::processEvent( LCEvent *evtP ) {
                     }
                 }
             }
-            if ( ! ffound_Zlepton ) return;
-
+            if ( ! ffound_Zlepton ) {
+                std::cout << "[INFO] Zleptons not found in event " << feventNum << ", skip" << std::endl;
+                return;
+            }
+            
             for (int i = 0; i < 2; i++){
                 Vl[i].SetPxPyPzE(   Zleptons[i]->getMomentum()[0],
                                     Zleptons[i]->getMomentum()[1],
                                     Zleptons[i]->getMomentum()[2],
                                     Zleptons[i]->getEnergy());
             }
-
-
             // Get Jets
             PIDHandler pidH (colJet);
             // get algorithm IDs
@@ -151,6 +153,10 @@ void LSSAna::processEvent( LCEvent *evtP ) {
                 vAllJets.push_back(recP);
             }
         } catch (lcio::DataNotAvailableException err) {}
+        if ( vAllJets.size() < 6 ) { // sanity check
+            std::cout << "[INFO] All Jets in event " << feventNum << " less than 6, skip" << std::endl;
+            return;
+        } 
         // jets
         vAllJets = sortLessDeltaRjl(vAllJets);
         leptonJets[0] = vAllJets.at(0);
@@ -162,19 +168,21 @@ void LSSAna::processEvent( LCEvent *evtP ) {
         std::vector<ReconstructedParticle*> vRealJets(realJets, realJets + 4);
         vRealJets = sortGreaterPT(vRealJets);
         std::vector<TLorentzVector> Vj;
-        for (int i = 0; i > 4; i++) {
+        for (int i = 0; i < 4; i++) {
             Vj.push_back(getReTLorentzVector(vRealJets.at(i)));
         }
-        fjet0_pT = Vj[0].Pt();
-        fjet1_pT = Vj[1].Pt();
-        fjet2_pT = Vj[2].Pt();
-        fjet3_pT = Vj[3].Pt();
-        fjet0_E = Vj[0].E();
-        fjet1_E = Vj[1].E();
-        fjet2_E = Vj[2].E();
-        fjet3_E = Vj[3].E();
+        fjet0_pT = Vj.at(0).Pt();
+        fjet1_pT = Vj.at(1).Pt();
+        fjet2_pT = Vj.at(2).Pt();
+        fjet3_pT = Vj.at(3).Pt();
+        fjet0_E = Vj.at(0).E();
+        fjet1_E = Vj.at(1).E();
+        fjet2_E = Vj.at(2).E();
+        fjet3_E = Vj.at(3).E();
+
 
         _outputTree_event->Fill();
+        //_outputTree_rech1->Fill();
 
     }
 
@@ -263,31 +271,31 @@ bool LSSAna::greaterPT(ReconstructedParticle *part1, ReconstructedParticle *part
 }
 
 std::vector<ReconstructedParticle*> LSSAna::sortLessDeltaRjl(std::vector<ReconstructedParticle*> &ivec) {
-      const int vsize = ivec.size();
-      for(int i=1; i<vsize; i++) {
-            for(int j = 0; j < vsize - i; j++) {
-                    if ( ! lessDeltaRjl( ivec[j], ivec[j+1] ) ) {
-                        ReconstructedParticle* temp;
-                        temp = ivec[j];
-                        ivec[j] = ivec[j+1];
-                        ivec[j+1] = temp;
-                    }
-             }
+    const int vsize = ivec.size();
+    ReconstructedParticle* temp;
+    for(int i=1; i < vsize; i++) {
+        for(int j = 0; j < vsize - i; j++) {
+            if ( ! lessDeltaRjl( ivec[j], ivec[j+1] ) ) {
+                temp = ivec[j];
+                ivec[j] = ivec[j+1];
+                ivec[j+1] = temp;
+            }
         }
-      return ivec;
+      }
+    return ivec;
 }
 
 std::vector<ReconstructedParticle*> LSSAna::sortGreaterPT(std::vector<ReconstructedParticle*> &ivec) {
-      const int vsize = ivec.size();
-      for(int i=1; i<vsize; i++) {
-            for(int j = 0; j < vsize - i; j++) {
-                    if ( ! greaterPT( ivec[j], ivec[j+1] ) ) {
-                        ReconstructedParticle* temp;
-                        temp = ivec[j];
-                        ivec[j] = ivec[j+1];
-                        ivec[j+1] = temp;
-                    }
-             }
+    const int vsize = ivec.size();
+    ReconstructedParticle* temp;
+    for(int i=1; i < vsize; i++) {
+        for(int j = 0; j < vsize - i; j++) {
+            if ( ! greaterPT( ivec[j], ivec[j+1] ) ) {
+                temp = ivec[j];
+                ivec[j] = ivec[j+1];
+                ivec[j+1] = temp;
+            }
         }
-      return ivec;
+      }
+    return ivec;
 }
