@@ -73,6 +73,7 @@ void LSSAna::init() {
     _outputTree_event->Branch("Jet3E", &fjet3_E);
 
     _outputTree_rech1 = new TTree(_treeName_rech1.c_str(), _treeName_rech1.c_str());
+    _outputTree_rech1->Branch("h1InvMass", &fh1InvMass);
 
     // init constants
     Leptons[0]=11; Leptons[1]=-11; Leptons[2]=13; Leptons[3]=-13; Leptons[4]=15; Leptons[5]=-15;
@@ -88,22 +89,33 @@ void LSSAna::processEvent( LCEvent *evtP ) {
         DoubleVec vJpT;
         DoubleVec vJE;
         std::vector<ReconstructedParticle*> vAllJets; //sorted by DeltaRjl
+        TVector3 P_sum;
         // init vars
         fmll = 0;
         fdelta_mll_mz = fmz;
         ffound_Zlepton = false;
+        fEvisible = 0;
+        P_sum.SetXYZ(0,0,0);
         // read lcio data
         try {
             LCCollection* colJet = evtP->getCollection(_colName);
             LCCollection* MCPart = evtP->getCollection("MCParticle");
+            //LCCollection* ClusterCol = evtP->getCollection("ArborCharged");
             NMCP = MCPart->getNumberOfElements();
             NJetsNum = colJet->getNumberOfElements();
+            //fCluster_num = ClusterCol->getNumberOfElements();
             feventNum = evtP->getEventNumber();
 
             // Get MCParticle ( focus on Z leptons)
             for (int i = 0; i < NMCP; i++) {
                 MCParticle *MCP_i = dynamic_cast<MCParticle*>(MCPart->getElementAt(i));
                 int MCPID_i = MCP_i->getPDG();
+                // sum visible E
+                if ( VTX.Mag() < 1 && EndP.Mag() > 1 && fabs(PDG) != 12 && fabs(PDG) != 14 && fabs(PDG) != 16 ) {
+                    fEvisible += MCP_i->getEnergy();
+                    P_sum += MCP_i->getMomentum();
+                }
+                // find Z leptons
                 int *p = std::find(Leptons, Leptons + 6, MCPID_i);
                 if(p == Leptons + 6) continue;
 
@@ -122,6 +134,8 @@ void LSSAna::processEvent( LCEvent *evtP ) {
                     }
                 }
             }
+            fMass_visible = sqrt(fEvisible * fEvisible - P_sum.Mag2() );
+
             if ( ! ffound_Zlepton ) {
                 std::cout << "[INFO] Zleptons not found in event " << feventNum << ", skip" << std::endl;
                 return;
@@ -200,23 +214,17 @@ void LSSAna::end() {
 }
 
 double LSSAna::getMCInvMass(MCParticle* part1, MCParticle* part2) {
+    TVector3 P12 = part1->getMomentum() + part2->getMomentum();
     double E12 = part1->getEnergy() + part2->getEnergy();
-    double P12x = part1->getMomentum()[0] + part2->getMomentum()[0];
-    double P12y = part1->getMomentum()[1] + part2->getMomentum()[1];
-    double P12z = part1->getMomentum()[2] + part2->getMomentum()[2];
-    double P12sqr = P12x * P12x + P12y * P12y + P12z * P12z;
-    double M12 = sqrt( E12 * E12 - P12sqr );
+    double M12 = sqrt( E12 * E12 - P12.Mag2() );
 
     return M12;
 }
 
 double LSSAna::getReInvMass(ReconstructedParticle* part1, ReconstructedParticle* part2) {
+    TVector3 P12 = part1->getMomentum() + part2->getMomentum();
     double E12 = part1->getEnergy() + part2->getEnergy();
-    double P12x = part1->getMomentum()[0] + part2->getMomentum()[0];
-    double P12y = part1->getMomentum()[1] + part2->getMomentum()[1];
-    double P12z = part1->getMomentum()[2] + part2->getMomentum()[2];
-    double P12sqr = P12x * P12x + P12y * P12y + P12z * P12z;
-    double M12 = sqrt( E12 * E12 - P12sqr );
+    double M12 = sqrt( E12 * E12 - P12.Mag2() );
 
     return M12;
 }

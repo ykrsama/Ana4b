@@ -88,6 +88,7 @@ private:
     //-------------------------------
     int feventNum;
     double fEvisible;
+    double fMass_visible;
     double fEmiss;
     
     // particle
@@ -113,6 +114,9 @@ private:
 
     // jet
     DoubleVec fvjTag;
+
+    // Arbor
+    int fCluster_num;
 
     
     //===============================
