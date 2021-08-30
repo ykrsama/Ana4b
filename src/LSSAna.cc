@@ -89,7 +89,7 @@ void LSSAna::processEvent( LCEvent *evtP ) {
         DoubleVec vJpT;
         DoubleVec vJE;
         std::vector<ReconstructedParticle*> vAllJets; //sorted by DeltaRjl
-        TVector3 P_sum;
+        TVector3 P_sum, VTX, EndP;
         // init vars
         fmll = 0;
         fdelta_mll_mz = fmz;
@@ -109,20 +109,22 @@ void LSSAna::processEvent( LCEvent *evtP ) {
             // Get MCParticle ( focus on Z leptons)
             for (int i = 0; i < NMCP; i++) {
                 MCParticle *MCP_i = dynamic_cast<MCParticle*>(MCPart->getElementAt(i));
-                int MCPID_i = MCP_i->getPDG();
+                int MCPDG_i = MCP_i->getPDG();
+                VTX = MCP_i->getVertex();
+                EndP = MCP_i->getEndpoint();
                 // sum visible E
-                if ( VTX.Mag() < 1 && EndP.Mag() > 1 && fabs(PDG) != 12 && fabs(PDG) != 14 && fabs(PDG) != 16 ) {
+                if ( VTX.Mag() < 1 && EndP.Mag() > 1 && fabs(MCPDG_i) != 12 && fabs(MCPDG_i) != 14 && fabs(MCPDG_i) != 16 ) {
                     fEvisible += MCP_i->getEnergy();
                     P_sum += MCP_i->getMomentum();
                 }
                 // find Z leptons
-                int *p = std::find(Leptons, Leptons + 6, MCPID_i);
+                int *p = std::find(Leptons, Leptons + 6, MCPDG_i);
                 if(p == Leptons + 6) continue;
 
                 for (int j = i + 1; j < NMCP; j++) {
                     MCParticle *MCP_j = dynamic_cast<MCParticle*>(MCPart->getElementAt(j));
                     int MCPID_j = MCP_j->getPDG();
-                    if (MCPID_j != -MCPID_i ) continue; // same flavor differnt charge
+                    if (MCPID_j != -MCPDG_i ) continue; // same flavor differnt charge
 
                     double mll_temp = getMCInvMass(MCP_i, MCP_j);
                     if ( abs( mll_temp - fmz ) < fdelta_mll_mz ) {
