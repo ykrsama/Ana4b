@@ -59,6 +59,7 @@ void LSSAna::init() {
     _outputTree_event->Branch("Evisible", &fEvisible);
     _outputTree_event->Branch("Emiss", &fEmiss);
     _outputTree_event->Branch("Mll", &fmll);
+    _outputTree_event->Branch("Ell", &fEll);
     _outputTree_event->Branch("deltaMllMZ", &fdelta_mll_mz);
     _outputTree_event->Branch("Mrecoil", &fmrecoil);
     _outputTree_event->Branch("deltaMrecoilMH", &fdelta_mrecoil_mh);
@@ -79,6 +80,7 @@ void LSSAna::init() {
     Leptons[0]=11; Leptons[1]=-11; Leptons[2]=13; Leptons[3]=-13; Leptons[4]=15; Leptons[5]=-15;
     fmz = 91.1876; // PDG2020
     fmh = 125.25;
+    S = 240 * 240;
 
 }
 
@@ -105,8 +107,10 @@ void LSSAna::processEvent( LCEvent *evtP ) {
             NJetsNum = colJet->getNumberOfElements();
             //fCluster_num = ClusterCol->getNumberOfElements();
             feventNum = evtP->getEventNumber();
-
-            // Get MCParticle ( focus on Z leptons)
+            
+            //=================================================================
+            // Get MCParticle ( i.e. Z leptons)
+            //-----------------------------------------------------------------
             for (int i = 0; i < NMCP; i++) {
                 MCParticle *MCP_i = dynamic_cast<MCParticle*>(MCPart->getElementAt(i));
                 int MCPDG_i = MCP_i->getPDG();
@@ -127,9 +131,9 @@ void LSSAna::processEvent( LCEvent *evtP ) {
                     if (MCPID_j != -MCPDG_i ) continue; // same flavor differnt charge
 
                     double mll_temp = getMCInvMass(MCP_i, MCP_j);
-                    if ( abs( mll_temp - fmz ) < fdelta_mll_mz ) {
+                    if ( fabs( mll_temp - fmz ) < fdelta_mll_mz ) {
                         fmll = mll_temp;
-                        fdelta_mll_mz = abs( fmll - fmz );
+                        fdelta_mll_mz = fabs( fmll - fmz );
                         Zleptons[0] = MCP_i;
                         Zleptons[1] = MCP_j;
                         ffound_Zlepton = true;
@@ -149,7 +153,9 @@ void LSSAna::processEvent( LCEvent *evtP ) {
                                     Zleptons[i]->getMomentum()[2],
                                     Zleptons[i]->getEnergy());
             }
+            //============================================================================
             // Get Jets
+            //----------------------------------------------------------------------------
             PIDHandler pidH (colJet);
             // get algorithm IDs
             alcfiplus = pidH.getAlgorithmID("lcfiplus");
@@ -173,7 +179,15 @@ void LSSAna::processEvent( LCEvent *evtP ) {
             std::cout << "[INFO] All Jets in event " << feventNum << " less than 6, skip" << std::endl;
             return;
         } 
+        //================================================================
+        // MCParticle
+        //----------------------------------------------------------------
+        fEll = Vl[0].Energy() + Vl[1].Energy();
+        fmrecoil = sqrt( S - 2 * sqrt( S ) * fEll + fmll * fmll );
+        fdelta_mrecoil_mh = fabs( fmrecoil - fmh );
+        //================================================================
         // jets
+        //----------------------------------------------------------------
         vAllJets = sortLessDeltaRjl(vAllJets);
         leptonJets[0] = vAllJets.at(0);
         leptonJets[1] = vAllJets.at(1);
@@ -216,7 +230,10 @@ void LSSAna::end() {
 }
 
 double LSSAna::getMCInvMass(MCParticle* part1, MCParticle* part2) {
-    TVector3 P12 = part1->getMomentum() + part2->getMomentum();
+    TVector3 P12;
+    P12.SetXYZ( part1->getMomentum()[0] + part2->getMomentum()[0],
+                part1->getMomentum()[1] + part2->getMomentum()[1],
+                part1->getMomentum()[2] + part2->getMomentum()[2]);
     double E12 = part1->getEnergy() + part2->getEnergy();
     double M12 = sqrt( E12 * E12 - P12.Mag2() );
 
@@ -224,7 +241,10 @@ double LSSAna::getMCInvMass(MCParticle* part1, MCParticle* part2) {
 }
 
 double LSSAna::getReInvMass(ReconstructedParticle* part1, ReconstructedParticle* part2) {
-    TVector3 P12 = part1->getMomentum() + part2->getMomentum();
+    TVector3 P12;
+    P12.SetXYZ( part1->getMomentum()[0] + part2->getMomentum()[0],
+                part1->getMomentum()[1] + part2->getMomentum()[1],
+                part1->getMomentum()[2] + part2->getMomentum()[2]);
     double E12 = part1->getEnergy() + part2->getEnergy();
     double M12 = sqrt( E12 * E12 - P12.Mag2() );
 

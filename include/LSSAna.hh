@@ -95,7 +95,8 @@ private:
     double feta;
     double fcosThetaj;
     double fyij;
-    double fmll;
+    double fmll; // inv mass of Z leptons
+    double fEll; // Energy of Z leptons
     double fmz;
     double fmh;
     double fmrecoil;
@@ -116,7 +117,7 @@ private:
     DoubleVec fvjTag;
 
     // Arbor
-    int fCluster_num;
+    //int fCluster_num;
 
     
     //===============================
@@ -127,8 +128,10 @@ private:
     std::string fj2Tag;
     double Mjj[4][4]; // matrix of massjj. Is a upper triangular matrix.
 
+    //===============================
     // constant
     int Leptons[6];
+    int S;
 
     // run time vars
     int NMCP; // element number of MCParticle
