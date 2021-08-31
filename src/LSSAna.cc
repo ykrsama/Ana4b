@@ -182,6 +182,7 @@ void LSSAna::processEvent( LCEvent *evtP ) {
         // MCParticle
         //----------------------------------------------------------------
         fMass_visible = sqrt(fEvisible * fEvisible - P_sum.Mag2() );
+        fEmiss = sqrt( S ) - fEvisible;
         fEll = Vl[0].Energy() + Vl[1].Energy();
         fmrecoil = sqrt( S - 2 * sqrt( S ) * fEll + fmll * fmll );
         fdelta_mrecoil_mh = fabs( fmrecoil - fmh );
