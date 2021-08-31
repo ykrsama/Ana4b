@@ -140,7 +140,6 @@ void LSSAna::processEvent( LCEvent *evtP ) {
                     }
                 }
             }
-            fMass_visible = sqrt(fEvisible * fEvisible - P_sum.Mag2() );
 
             if ( ! ffound_Zlepton ) {
                 std::cout << "[INFO] Zleptons not found in event " << feventNum << ", skip" << std::endl;
@@ -182,6 +181,7 @@ void LSSAna::processEvent( LCEvent *evtP ) {
         //================================================================
         // MCParticle
         //----------------------------------------------------------------
+        fMass_visible = sqrt(fEvisible * fEvisible - P_sum.Mag2() );
         fEll = Vl[0].Energy() + Vl[1].Energy();
         fmrecoil = sqrt( S - 2 * sqrt( S ) * fEll + fmll * fmll );
         fdelta_mrecoil_mh = fabs( fmrecoil - fmh );
@@ -230,10 +230,8 @@ void LSSAna::end() {
 }
 
 double LSSAna::getMCInvMass(MCParticle* part1, MCParticle* part2) {
-    TVector3 P12;
-    P12.SetXYZ( part1->getMomentum()[0] + part2->getMomentum()[0],
-                part1->getMomentum()[1] + part2->getMomentum()[1],
-                part1->getMomentum()[2] + part2->getMomentum()[2]);
+    TVector3 P12 = part1->getMomentum();
+    P12 += part2->getMomentum();
     double E12 = part1->getEnergy() + part2->getEnergy();
     double M12 = sqrt( E12 * E12 - P12.Mag2() );
 
@@ -241,10 +239,8 @@ double LSSAna::getMCInvMass(MCParticle* part1, MCParticle* part2) {
 }
 
 double LSSAna::getReInvMass(ReconstructedParticle* part1, ReconstructedParticle* part2) {
-    TVector3 P12;
-    P12.SetXYZ( part1->getMomentum()[0] + part2->getMomentum()[0],
-                part1->getMomentum()[1] + part2->getMomentum()[1],
-                part1->getMomentum()[2] + part2->getMomentum()[2]);
+    TVector3 P12 = part1->getMomentum();
+    P12 += part2->getMomentum();
     double E12 = part1->getEnergy() + part2->getEnergy();
     double M12 = sqrt( E12 * E12 - P12.Mag2() );
 
