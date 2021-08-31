@@ -39,11 +39,11 @@ public:
 
 private:
 
-    double getMCInvMass(MCParticle* part1, MCParticle* part2);
-    double getReInvMass(ReconstructedParticle* part1, ReconstructedParticle* part2);
+    double getInvMass(MCParticle* part1, MCParticle* part2);
+    double getInvMass(ReconstructedParticle* part1, ReconstructedParticle* part2);
 
-    TLorentzVector getMCTLorentzVector(MCParticle* part);
-    TLorentzVector getReTLorentzVector(ReconstructedParticle* part);
+    TLorentzVector getTLorentzVector(MCParticle* part);
+    TLorentzVector getTLorentzVector(ReconstructedParticle* part);
 
     double getMassjj(  double j1E,
                     double j1Px,

@@ -130,7 +130,7 @@ void LSSAna::processEvent( LCEvent *evtP ) {
                     int MCPID_j = MCP_j->getPDG();
                     if (MCPID_j != -MCPDG_i ) continue; // same flavor differnt charge
 
-                    double mll_temp = getMCInvMass(MCP_i, MCP_j);
+                    double mll_temp = getInvMass(MCP_i, MCP_j);
                     if ( fabs( mll_temp - fmz ) < fdelta_mll_mz ) {
                         fmll = mll_temp;
                         fdelta_mll_mz = fabs( fmll - fmz );
@@ -199,7 +199,7 @@ void LSSAna::processEvent( LCEvent *evtP ) {
         vRealJets = sortGreaterPT(vRealJets);
         std::vector<TLorentzVector> Vj;
         for (int i = 0; i < 4; i++) {
-            Vj.push_back(getReTLorentzVector(vRealJets.at(i)));
+            Vj.push_back(getTLorentzVector(vRealJets.at(i)));
         }
         fjet0_pT = Vj.at(0).Pt();
         fjet1_pT = Vj.at(1).Pt();
@@ -229,7 +229,7 @@ void LSSAna::end() {
     delete tree_file;
 }
 
-double LSSAna::getMCInvMass(MCParticle* part1, MCParticle* part2) {
+double LSSAna::getInvMass(MCParticle* part1, MCParticle* part2) {
     TVector3 P12 = part1->getMomentum();
     P12 += part2->getMomentum();
     double E12 = part1->getEnergy() + part2->getEnergy();
@@ -238,7 +238,7 @@ double LSSAna::getMCInvMass(MCParticle* part1, MCParticle* part2) {
     return M12;
 }
 
-double LSSAna::getReInvMass(ReconstructedParticle* part1, ReconstructedParticle* part2) {
+double LSSAna::getInvMass(ReconstructedParticle* part1, ReconstructedParticle* part2) {
     TVector3 P12 = part1->getMomentum();
     P12 += part2->getMomentum();
     double E12 = part1->getEnergy() + part2->getEnergy();
@@ -247,7 +247,7 @@ double LSSAna::getReInvMass(ReconstructedParticle* part1, ReconstructedParticle*
     return M12;
 }
 
-TLorentzVector LSSAna::getMCTLorentzVector(MCParticle* part) {
+TLorentzVector LSSAna::getTLorentzVector(MCParticle* part) {
     TLorentzVector Vpart;
     Vpart.SetPxPyPzE(   part->getMomentum()[0],
                         part->getMomentum()[1],
@@ -256,7 +256,7 @@ TLorentzVector LSSAna::getMCTLorentzVector(MCParticle* part) {
     return Vpart;
 }
 
-TLorentzVector LSSAna::getReTLorentzVector(ReconstructedParticle* part) {
+TLorentzVector LSSAna::getTLorentzVector(ReconstructedParticle* part) {
     TLorentzVector Vpart;
     Vpart.SetPxPyPzE(   part->getMomentum()[0],
                         part->getMomentum()[1],
