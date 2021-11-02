@@ -45,19 +45,11 @@ private:
     TLorentzVector getTLorentzVector(MCParticle* part);
     TLorentzVector getTLorentzVector(ReconstructedParticle* part);
 
-    double getMassjj(  double j1E,
-                    double j1Px,
-                    double j1Py,
-                    double j1Pz,
-                    double j2E,
-                    double j2Px,
-                    double j2Py,
-                    double j2Pz );
+    double getMassjj( ReconstructedParticle* part1, ReconstructedParticle* part2 );
 
+    //double getDeltaM( int j1, int j2, int j3, int j4) { return fabs( Mjj[j1][j2] - Mjj[j3][j4] ); };
 
-    double getDeltaM( int j1, int j2, int j3, int j4) { return fabs( Mjj[j1][j2] - Mjj[j3][j4] ); };
-
-    double getRm( int j1, int j2, int j3, int j4 ) { return fabs( ( Mjj[j1][j2] - Mjj[j3][j4] ) / ( Mjj[j1][j2] + Mjj[j3][j4] ) ); };
+    //double getRm( int j1, int j2, int j3, int j4 ) { return fabs( ( Mjj[j1][j2] - Mjj[j3][j4] ) / ( Mjj[j1][j2] + Mjj[j3][j4] ) ); };
 
     bool lessDeltaRjl(ReconstructedParticle *part1, ReconstructedParticle *part2);
 
@@ -67,16 +59,24 @@ private:
     
     std::vector<ReconstructedParticle*> sortGreaterPT(std::vector<ReconstructedParticle*> &ivec);
 
+    std::vector<ReconstructedParticle*> arrangeJets(std::vector<ReconstructedParticle*> &ivec);
+
+    struct {
+        bool operator()(const DoubleVec lcfi1, const DoubleVec lcfi2) {
+            return ( lcfi1.at(0) > lcfi2.at(0) );
+        };
+    } greaterBTag;
+
 private:
     // ROOT related
     TFile* tree_file;
+    TTree* _outputTree_truth;
     TTree* _outputTree_event;
-    TTree* _outputTree_rech1;
 
     // Processor Parameters
     std::string _treeFileName;
+    //std::string _treeName_truth;
     std::string _treeName_event;
-    std::string _treeName_rech1;
     std::string _colName;
     std::ostream _output;
     int _overwrite;
@@ -102,6 +102,11 @@ private:
     double fmrecoil;
     double fdelta_mll_mz;
     double fdelta_mrecoil_mh;
+    int fMCbNum; // b quark number
+    int fMCcNum;
+    int fMCqNum; 
+
+    // reco jet
     double fjet0_pT;
     double fjet0_E;
     double fjet1_pT;
@@ -110,24 +115,30 @@ private:
     double fjet2_E;
     double fjet3_pT;
     double fjet3_E;
+    double fbTagNum;
+    DoubleVec flcfiplus0;
+    DoubleVec flcfiplus1;
+    DoubleVec flcfiplus2;
+    DoubleVec flcfiplus3;
 
     bool ffound_Zlepton;
 
     // jet
-    DoubleVec fvjTag;
 
-    // Arbor
-    //int fCluster_num;
-
-    
     //===============================
     // h1
+    double Mj00j01; // invariant mass of h1
+    double Mj10j11;
+    double fdeltaMjj;
+    double fDeltaRj00j01;
+    double fDeltaRj10j11;
+    StringVec fJetTags;
+
+    //==============================
+    // rech1 tree
+
     double fh1InvMass;
     double fDletaRjj;
-    std::string fj1Tag;
-    std::string fj2Tag;
-    double Mjj[4][4]; // matrix of massjj. Is a upper triangular matrix.
-
     //===============================
     // constant
     int Leptons[6];
@@ -144,8 +155,16 @@ private:
     int iltag; // value of light jet param
     int icategory; // Parameter index of Category
     int NJetsNum; // element number of Jets
+    double fbTag;
+    double fcTag;
+    double fCategory;
+    double flTag;
+    double ftempTagParam;
+    DoubleVec lcfiplus_temp;
+    std::string ftempTag;
     ReconstructedParticle* leptonJets[2];
     ReconstructedParticle* realJets[4];
+    std::vector<DoubleVec> vlcfiplus;
 
     TLorentzVector Vl[2];
     TLorentzVector Vj[2];

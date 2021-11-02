@@ -13,16 +13,10 @@ LSSAna::LSSAna() : Processor("LSSAna"),
         _treeFileName);
 
     _treeName_event = "event";
-    registerProcessorParameter("EventThreeName",
+    registerProcessorParameter("EventTreeName",
         "event level",
         _treeName_event,
         _treeName_event);
-
-    _treeName_rech1 = "rech1";
-    registerProcessorParameter("rech1TreeName",
-        "reconstructed h1",
-        _treeName_rech1,
-        _treeName_rech1);
 
     _colName = "RefinedJets";
     registerProcessorParameter( "CollectionName",
@@ -51,8 +45,8 @@ void LSSAna::init() {
         tree_file = new TFile(_treeFileName.c_str(), "NEW");
     }
 
+    //_outputTree_truth = new TTree( _treeName_truth.c_str(), _treeName_truth.c_str());
     _outputTree_event = new TTree( _treeName_event.c_str(), _treeName_event.c_str());
-    _outputTree_rech1 = new TTree( _treeName_rech1.c_str(), _treeName_rech1.c_str());
 
     // Register Branch
     _outputTree_event->Branch("EventNum", &feventNum, "EventNum/I");
@@ -63,7 +57,11 @@ void LSSAna::init() {
     _outputTree_event->Branch("deltaMllMZ", &fdelta_mll_mz);
     _outputTree_event->Branch("Mrecoil", &fmrecoil);
     _outputTree_event->Branch("deltaMrecoilMH", &fdelta_mrecoil_mh);
+    _outputTree_event->Branch("bNum", &fMCbNum);
+    _outputTree_event->Branch("cNum", &fMCcNum);
+    _outputTree_event->Branch("qNum", &fMCqNum);
     // jets
+    _outputTree_event->Branch("NJetsNum", &NJetsNum);
     _outputTree_event->Branch("Jet0pT", &fjet0_pT);
     _outputTree_event->Branch("Jet1pT", &fjet1_pT);
     _outputTree_event->Branch("Jet2pT", &fjet2_pT);
@@ -72,9 +70,18 @@ void LSSAna::init() {
     _outputTree_event->Branch("Jet1E", &fjet1_E);
     _outputTree_event->Branch("Jet2E", &fjet2_E);
     _outputTree_event->Branch("Jet3E", &fjet3_E);
-
-    _outputTree_rech1 = new TTree(_treeName_rech1.c_str(), _treeName_rech1.c_str());
-    _outputTree_rech1->Branch("h1InvMass", &fh1InvMass);
+    // h1
+    _outputTree_event->Branch("Mj00j01", &Mj00j01);
+    _outputTree_event->Branch("Mj10j11", &Mj10j11);
+    _outputTree_event->Branch("deltaMjj", &fdeltaMjj);
+    _outputTree_event->Branch("DeltaRj00j01", &fDeltaRj00j01);
+    _outputTree_event->Branch("DeltaRj10j11", &fDeltaRj10j11);
+    _outputTree_event->Branch("JetTags", &fJetTags);
+    _outputTree_event->Branch("lcfiplus0", &flcfiplus0);
+    _outputTree_event->Branch("lcfiplus1", &flcfiplus1);
+    _outputTree_event->Branch("lcfiplus2", &flcfiplus2);
+    _outputTree_event->Branch("lcfiplus3", &flcfiplus3);
+    //_outputTree_event->Branch("h1InvMass", &fh1InvMass);
 
     // init constants
     Leptons[0]=11; Leptons[1]=-11; Leptons[2]=13; Leptons[3]=-13; Leptons[4]=15; Leptons[5]=-15;
@@ -97,7 +104,14 @@ void LSSAna::processEvent( LCEvent *evtP ) {
         fdelta_mll_mz = fmz;
         ffound_Zlepton = false;
         fEvisible = 0;
+        fMCbNum = 0;
+        fMCcNum = 0;
+        fMCqNum = 0;
+        fbTagNum = 0;
         P_sum.SetXYZ(0,0,0);
+        fJetTags.clear();
+        vlcfiplus.clear();
+
         // read lcio data
         try {
             LCCollection* colJet = evtP->getCollection(_colName);
@@ -120,6 +134,9 @@ void LSSAna::processEvent( LCEvent *evtP ) {
                 if ( VTX.Mag() < 1 && EndP.Mag() > 1 && fabs(MCPDG_i) != 12 && fabs(MCPDG_i) != 14 && fabs(MCPDG_i) != 16 ) {
                     fEvisible += MCP_i->getEnergy();
                     P_sum += MCP_i->getMomentum();
+                    if (fabs(MCPDG_i) == 5) fMCbNum++;
+                    if (fabs(MCPDG_i) == 4) fMCcNum++;
+                    if (fabs(MCPDG_i) >= 1 && fabs(MCPDG_i) <= 8) fMCqNum++;
                 }
                 // find Z leptons
                 int *p = std::find(Leptons, Leptons + 6, MCPDG_i);
@@ -152,9 +169,9 @@ void LSSAna::processEvent( LCEvent *evtP ) {
                                     Zleptons[i]->getMomentum()[2],
                                     Zleptons[i]->getEnergy());
             }
-            //============================================================================
+            //================================================================
             // Get Jets
-            //----------------------------------------------------------------------------
+            //-----------------------------------------------------------------
             PIDHandler pidH (colJet);
             // get algorithm IDs
             alcfiplus = pidH.getAlgorithmID("lcfiplus");
@@ -162,6 +179,7 @@ void LSSAna::processEvent( LCEvent *evtP ) {
             // get lcfiplus parameter indiices
             ibtag = pidH.getParameterIndex(alcfiplus, "BTag");
             ictag = pidH.getParameterIndex(alcfiplus, "CTag");
+            icategory = pidH.getParameterIndex(alcfiplus, "Category");
             // get yth parameter indicies
             for (int i = 0; i < 10; i++ ) {
                 std::stringstream ss;
@@ -173,48 +191,108 @@ void LSSAna::processEvent( LCEvent *evtP ) {
                 ReconstructedParticle* recP = dynamic_cast<ReconstructedParticle*>(colJet->getElementAt(i));
                 vAllJets.push_back(recP);
             }
+            // if ( vAllJets.size() < 6 ) { // sanity check
+            //     std::cout << "[INFO] All Jets in event " << feventNum << " less than 6, skip" << std::endl;
+            //     return;
+            // }
+            //================================================================
+            // Process MCParticle
+            //----------------------------------------------------------------
+            fMass_visible = sqrt(fEvisible * fEvisible - P_sum.Mag2() );
+            fEmiss = sqrt( S ) - fEvisible;
+            fEll = Vl[0].Energy() + Vl[1].Energy();
+            fmrecoil = sqrt( S - 2 * sqrt( S ) * fEll + fmll * fmll );
+            fdelta_mrecoil_mh = fabs( fmrecoil - fmh );
+            //================================================================
+            // Process Jets
+            //-----------------------------------------------------------------
+            if ( NJetsNum == 6 ) {
+                // find Real jets and Lepton jets
+                vAllJets = sortLessDeltaRjl(vAllJets);
+                leptonJets[0] = vAllJets.at(0);
+                leptonJets[1] = vAllJets.at(1);
+                for ( int j = 0; j < 4; j++ ) {
+                    realJets[j] = vAllJets.at(j + 2);
+                }
+            } else if ( NJetsNum == 5 ) {
+                vAllJets = sortLessDeltaRjl(vAllJets);
+                leptonJets[0] = vAllJets.at(0);
+                for ( int j = 0; j < 4; j++ ) {
+                    realJets[j] = vAllJets.at(j + 1);
+                }
+            } else if ( NJetsNum == 4 ) {
+                for ( int j = 0; j < 4; j++ ) {
+                    realJets[j] = vAllJets.at(j);
+                }
+            } else {
+                std::cout << "[INFO] event " << feventNum <<": Jets Number = " << NJetsNum << ", skip" << std::endl;
+                return;
+            }
+
+            std::vector<ReconstructedParticle*> vRealJets(realJets, realJets + 4);
+            // sorted by greater pT
+            vRealJets = sortGreaterPT(vRealJets);
+            std::vector<TLorentzVector> Vj;
+            for (int i = 0; i < 4; i++) {
+                Vj.push_back(getTLorentzVector(vRealJets.at(i)));
+            }
+            fjet0_pT = Vj.at(0).Pt();
+            fjet1_pT = Vj.at(1).Pt();
+            fjet2_pT = Vj.at(2).Pt();
+            fjet3_pT = Vj.at(3).Pt();
+            fjet0_E = Vj.at(0).E();
+            fjet1_E = Vj.at(1).E();
+            fjet2_E = Vj.at(2).E();
+            fjet3_E = Vj.at(3).E();
+            // sorted by DeltaR
+            vRealJets = arrangeJets( vRealJets );
+            Vj.clear();
+            for (int i = 0; i < 4; i++) {
+                Vj.push_back(getTLorentzVector(vRealJets.at(i)));
+                // get PID
+                const ParticleID &pid_lcfiplus = pidH.getParticleID(vRealJets.at(i), alcfiplus);
+                fbTag = pid_lcfiplus.getParameters()[ibtag];
+                fcTag = pid_lcfiplus.getParameters()[ictag];
+                fCategory = pid_lcfiplus.getParameters()[icategory];
+                flTag = 1 - fbTag - fcTag;
+                // find most likely jet tag
+                ftempTagParam = fbTag;
+                ftempTag = "b";
+                if ( fcTag > ftempTagParam )
+                {
+                    ftempTagParam = fcTag;
+                    ftempTag = "c";
+                }
+                if ( flTag > ftempTagParam )
+                {
+                    ftempTagParam = flTag;
+                    ftempTag = "l";
+                }
+                if (ftempTag == "b") fbTagNum++;
+                fJetTags.push_back(ftempTag);
+
+                // lcfiplus
+                lcfiplus_temp.clear();
+                lcfiplus_temp.push_back(fbTag);
+                lcfiplus_temp.push_back(fcTag);
+                lcfiplus_temp.push_back(fCategory);
+                vlcfiplus.push_back(lcfiplus_temp);
+            }
+            // sort vlcfiplus by bTag
+            std::sort(vlcfiplus.begin(), vlcfiplus.end(), greaterBTag);
+            flcfiplus0 = vlcfiplus.at(0);
+            flcfiplus1 = vlcfiplus.at(1);
+            flcfiplus2 = vlcfiplus.at(2);
+            flcfiplus3 = vlcfiplus.at(3);
+
+            Mj00j01 = getMassjj( vRealJets.at(0), vRealJets.at(1) );
+            Mj10j11 = getMassjj( vRealJets.at(2), vRealJets.at(3) );
+            fdeltaMjj = fabs(Mj00j01 - Mj10j11);
+            fDeltaRj00j01 = Vj.at(0).DeltaR(Vj.at(1));
+            fDeltaRj10j11 = Vj.at(2).DeltaR(Vj.at(3));
         } catch (lcio::DataNotAvailableException err) {}
-        if ( vAllJets.size() < 6 ) { // sanity check
-            std::cout << "[INFO] All Jets in event " << feventNum << " less than 6, skip" << std::endl;
-            return;
-        } 
-        //================================================================
-        // MCParticle
-        //----------------------------------------------------------------
-        fMass_visible = sqrt(fEvisible * fEvisible - P_sum.Mag2() );
-        fEmiss = sqrt( S ) - fEvisible;
-        fEll = Vl[0].Energy() + Vl[1].Energy();
-        fmrecoil = sqrt( S - 2 * sqrt( S ) * fEll + fmll * fmll );
-        fdelta_mrecoil_mh = fabs( fmrecoil - fmh );
-        //================================================================
-        // jets
-        //----------------------------------------------------------------
-        vAllJets = sortLessDeltaRjl(vAllJets);
-        leptonJets[0] = vAllJets.at(0);
-        leptonJets[1] = vAllJets.at(1);
-        realJets[0] = vAllJets.at(2);
-        realJets[1] = vAllJets.at(3);
-        realJets[2] = vAllJets.at(4);
-        realJets[3] = vAllJets.at(5);
-        std::vector<ReconstructedParticle*> vRealJets(realJets, realJets + 4);
-        vRealJets = sortGreaterPT(vRealJets);
-        std::vector<TLorentzVector> Vj;
-        for (int i = 0; i < 4; i++) {
-            Vj.push_back(getTLorentzVector(vRealJets.at(i)));
-        }
-        fjet0_pT = Vj.at(0).Pt();
-        fjet1_pT = Vj.at(1).Pt();
-        fjet2_pT = Vj.at(2).Pt();
-        fjet3_pT = Vj.at(3).Pt();
-        fjet0_E = Vj.at(0).E();
-        fjet1_E = Vj.at(1).E();
-        fjet2_E = Vj.at(2).E();
-        fjet3_E = Vj.at(3).E();
-
-
+        //_outputTree_truth->Fill();
         _outputTree_event->Fill();
-        //_outputTree_rech1->Fill();
-
     }
 
 
@@ -284,16 +362,8 @@ bool LSSAna::lessDeltaRjl(ReconstructedParticle *part1, ReconstructedParticle *p
 }
 
 bool LSSAna::greaterPT(ReconstructedParticle *part1, ReconstructedParticle *part2) {
-    TLorentzVector Vpart1;
-    TLorentzVector Vpart2;
-    Vpart1.SetPxPyPzE(  part1->getMomentum()[0],
-                        part1->getMomentum()[1],
-                        part1->getMomentum()[2],
-                        part1->getEnergy());
-    Vpart2.SetPxPyPzE(   part2->getMomentum()[0],
-                        part2->getMomentum()[1],
-                        part2->getMomentum()[3],
-                        part2->getEnergy());
+    TLorentzVector Vpart1 = getTLorentzVector(part1);
+    TLorentzVector Vpart2 = getTLorentzVector(part2);
     return (Vpart1.Pt() > Vpart2.Pt());
 }
 
@@ -325,4 +395,56 @@ std::vector<ReconstructedParticle*> LSSAna::sortGreaterPT(std::vector<Reconstruc
         }
       }
     return ivec;
+}
+
+double LSSAna::getMassjj( ReconstructedParticle* part1, ReconstructedParticle* part2 ) {
+    TVector3 Pjj = part1->getMomentum();
+    Pjj += part2->getMomentum();
+    double Ejj = part1->getEnergy() + part2->getEnergy();
+    double Mjj = sqrt( Ejj * Ejj - Pjj.Mag2() );
+    return Mjj;
+}
+
+std::vector<ReconstructedParticle*> LSSAna::arrangeJets(std::vector<ReconstructedParticle*> &ivec) {
+    // arrange jets for reconstruction of h1. (ivec[0] ivec[1]) is a pair, (ivec[2] ivec[3]) is another pair.
+    double Mjj[4][4];
+    double deltaM, deltaM_temp;
+    int jIndex[4];
+    std::vector<ReconstructedParticle*> resVec;
+    TLorentzVector Vj1, Vj2;
+    for (int i = 0; i < 4; i++) {
+        for (int j = i; j < 4; j++) {
+            Mjj[i][j] = getMassjj(ivec.at(i), ivec.at(j));
+        }
+    }
+    // 0 1, 2 3
+    deltaM = fabs( Mjj[0][1] - Mjj[2][3] );
+    jIndex[0] = 0;
+    jIndex[1] = 1;
+    jIndex[2] = 2;
+    jIndex[3] = 3;
+    // 0 2, 1 3
+    deltaM_temp = fabs( Mjj[0][2] - Mjj[1][3] );
+    if ( deltaM_temp < deltaM ) {
+        deltaM = deltaM_temp;
+        jIndex[0] = 0;
+        jIndex[1] = 2;
+        jIndex[2] = 1;
+        jIndex[3] = 3;
+    }
+    // 0 3, 1 2
+    deltaM_temp = fabs( Mjj[0][3] - Mjj[1][2] );
+    if ( deltaM_temp < deltaM ) {
+        deltaM = deltaM_temp;
+        jIndex[0] = 0;
+        jIndex[1] = 3;
+        jIndex[2] = 1;
+        jIndex[3] = 2;
+    }
+
+    // arrange
+    for (int i = 0; i < 4; i++) {
+        resVec.push_back( ivec.at( jIndex[i] ) );
+    }
+    return resVec;
 }
