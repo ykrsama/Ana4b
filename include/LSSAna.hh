@@ -55,9 +55,13 @@ private:
 
     bool greaterPT(ReconstructedParticle *part1, ReconstructedParticle *part2);
 
+    bool greaterE(ReconstructedParticle *part1, ReconstructedParticle *part2);
+
     std::vector<ReconstructedParticle*> sortLessDeltaRjl(std::vector<ReconstructedParticle*> &ivec);
     
     std::vector<ReconstructedParticle*> sortGreaterPT(std::vector<ReconstructedParticle*> &ivec);
+
+    std::vector<ReconstructedParticle*> sortGreaterE(std::vector<ReconstructedParticle*> &ivec);
 
     std::vector<ReconstructedParticle*> arrangeJets(std::vector<ReconstructedParticle*> &ivec);
 
@@ -104,7 +108,11 @@ private:
     double fdelta_mrecoil_mh;
     int fMCbNum; // b quark number
     int fMCcNum;
-    int fMCqNum; 
+    int fMCqNum;
+    double fb0E;
+    double fb1E;
+    double fb2E;
+    double fb3E;
 
     // reco jet
     double fjet0_pT;
