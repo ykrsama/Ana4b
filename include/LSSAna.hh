@@ -53,15 +53,21 @@ private:
 
     bool lessDeltaRjl(ReconstructedParticle *part1, ReconstructedParticle *part2);
 
+    bool lessDeltaRjl(MCParticle *part1, ReconstructedParticle *part2);
+
     bool greaterPT(ReconstructedParticle *part1, ReconstructedParticle *part2);
 
     bool greaterE(ReconstructedParticle *part1, ReconstructedParticle *part2);
+
+    bool greaterE(MCParticle* part1, MCParticle *part2);
 
     std::vector<ReconstructedParticle*> sortLessDeltaRjl(std::vector<ReconstructedParticle*> &ivec);
     
     std::vector<ReconstructedParticle*> sortGreaterPT(std::vector<ReconstructedParticle*> &ivec);
 
     std::vector<ReconstructedParticle*> sortGreaterE(std::vector<ReconstructedParticle*> &ivec);
+
+    std::vector<MCParticle*> sortGreaterE(std::vector<MCParticle*> &ivec);
 
     std::vector<ReconstructedParticle*> arrangeJets(std::vector<ReconstructedParticle*> &ivec);
 
@@ -109,10 +115,7 @@ private:
     int fMCbNum; // b quark number
     int fMCcNum;
     int fMCqNum;
-    double fb0E;
-    double fb1E;
-    double fb2E;
-    double fb3E;
+    DoubleVec fEb;
 
     // reco jet
     double fjet0_pT;
@@ -123,6 +126,10 @@ private:
     double fjet2_E;
     double fjet3_pT;
     double fjet3_E;
+    DoubleVec fPTjet;
+    DoubleVec fEjet;
+    DoubleVec fDeltaRBJ;
+    DoubleVec fEBJ;
     double fbTagNum;
     DoubleVec flcfiplus0;
     DoubleVec flcfiplus1;
@@ -172,6 +179,7 @@ private:
     std::string ftempTag;
     ReconstructedParticle* leptonJets[2];
     ReconstructedParticle* realJets[4];
+    MCParticle* MCbs[4];
     std::vector<DoubleVec> vlcfiplus;
 
     TLorentzVector Vl[2];

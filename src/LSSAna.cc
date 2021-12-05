@@ -60,12 +60,13 @@ void LSSAna::init() {
     _outputTree_event->Branch("bNum", &fMCbNum);
     _outputTree_event->Branch("cNum", &fMCcNum);
     _outputTree_event->Branch("qNum", &fMCqNum);
-    _outputTree_event->Branch("b0E", &fb0E);
-    _outputTree_event->Branch("b1E", &fb1E);
-    _outputTree_event->Branch("b2E", &fb2E);
-    _outputTree_event->Branch("b3E", &fb3E);
+    _outputTree_event->Branch("Eb", &fEb);
     // jets
     _outputTree_event->Branch("NJetsNum", &NJetsNum);
+    _outputTree_event->Branch("PTJet", &fPTjet);
+    _outputTree_event->Branch("EJet", &fEjet);
+    _outputTree_event->Branch("DeltaRBJ", &fDeltaRBJ);
+    _outputTree_event->Branch("EBJ", &fEBJ);
     _outputTree_event->Branch("Jet0E", &fjet0_E);
     _outputTree_event->Branch("Jet1E", &fjet1_E);
     _outputTree_event->Branch("Jet2E", &fjet2_E);
@@ -115,6 +116,11 @@ void LSSAna::processEvent( LCEvent *evtP ) {
         P_sum.SetXYZ(0,0,0);
         fJetTags.clear();
         vlcfiplus.clear();
+        fEb.clear();
+        fPTjet.clear();
+        fEjet.clear();
+        fDeltaRBJ.clear();
+        fEBJ.clear();
 
         // read lcio data
         try {
@@ -137,7 +143,7 @@ void LSSAna::processEvent( LCEvent *evtP ) {
                 // get Parent info
                 MCParticle *MCP_parent = nullptr;
                 int MCPDG_parent = 0;
-                if ( MCP_i->getNumberOfParents() > 0 ) {
+                if ( MCP_i->getParents().size() > 0 ) {
                     MCP_parent = MCP_i->getParents()[0];
                     MCPDG_parent = MCP_parent->getPDG();
                 }
@@ -148,7 +154,10 @@ void LSSAna::processEvent( LCEvent *evtP ) {
                         P_sum += MCP_i->getMomentum();
                     }
                     if ( MCPDG_parent == 9999992 ) {
-                        if (fabs(MCPDG_i) == 5) fMCbNum++;
+                        if (fabs(MCPDG_i) == 5) {
+                            MCbs[fMCbNum] = MCP_i;
+                            fMCbNum++;
+                        }
                         if (fabs(MCPDG_i) == 4) fMCcNum++;
                         if (fabs(MCPDG_i) >= 1 && fabs(MCPDG_i) <= 8) fMCqNum++;
                     }
@@ -250,6 +259,8 @@ void LSSAna::processEvent( LCEvent *evtP ) {
             std::vector<TLorentzVector> Vj;
             for (int i = 0; i < 4; i++) {
                 Vj.push_back(getTLorentzVector(vRealJets.at(i)));
+                fPTjet.push_back(Vj.at(i).Pt());
+                fEjet.push_back(Vj.at(i).E());
             }
             fjet0_pT = Vj.at(0).Pt();
             fjet1_pT = Vj.at(1).Pt();
@@ -305,6 +316,20 @@ void LSSAna::processEvent( LCEvent *evtP ) {
             fdeltaMjj = fabs(Mj00j01 - Mj10j11);
             fDeltaRj00j01 = Vj.at(0).DeltaR(Vj.at(1));
             fDeltaRj10j11 = Vj.at(2).DeltaR(Vj.at(3));
+            //========================================================
+            // For Energy resolution
+            //---------------------------------------------------------
+            if ( fMCbNum == 4 ) {
+                std::vector<MCParticle*> vMCbs(MCbs, MCbs + 4);
+                std::vector<TLorentzVector> VecB;
+                vMCbs = sortGreaterE(vMCbs);
+                for (int i = 0; i < 4; i++) {
+                    VecB.push_back(getTLorentzVector(vMCbs.at(i)));
+                    fEb.push_back(VecB.at(i).E());
+                    fDeltaRBJ.push_back(Vj.at(i).DeltaR(VecB.at(i)));
+                    fEBJ.push_back(VecB.at(i).E() - Vj.at(i).E());
+                }
+            }
         } catch (lcio::DataNotAvailableException err) {}
         //_outputTree_truth->Fill();
         _outputTree_event->Fill();
@@ -376,6 +401,23 @@ bool LSSAna::lessDeltaRjl(ReconstructedParticle *part1, ReconstructedParticle *p
     return ( DeltaRlj1 < DeltaRlj2 );
 }
 
+bool LSSAna::lessDeltaRjl(MCParticle *part1, ReconstructedParticle *part2) {
+    TLorentzVector Vjet1;
+    TLorentzVector Vjet2;
+    Vjet1.SetPxPyPzE(   part1->getMomentum()[0],
+                        part1->getMomentum()[1],
+                        part1->getMomentum()[2],
+                        part1->getEnergy());
+    Vjet2.SetPxPyPzE(   part2->getMomentum()[0],
+                        part2->getMomentum()[1],
+                        part2->getMomentum()[3],
+                        part2->getEnergy());
+    double DeltaRlj1 = std::min( Vjet1.DeltaR( Vl[0] ), Vjet1.DeltaR( Vl[1] ) );
+    double DeltaRlj2 = std::min( Vjet2.DeltaR( Vl[0] ), Vjet2.DeltaR( Vl[1] ) );
+
+    return ( DeltaRlj1 < DeltaRlj2 );
+}
+
 bool LSSAna::greaterPT(ReconstructedParticle *part1, ReconstructedParticle *part2) {
     TLorentzVector Vpart1 = getTLorentzVector(part1);
     TLorentzVector Vpart2 = getTLorentzVector(part2);
@@ -383,6 +425,12 @@ bool LSSAna::greaterPT(ReconstructedParticle *part1, ReconstructedParticle *part
 }
 
 bool LSSAna::greaterE(ReconstructedParticle *part1, ReconstructedParticle *part2) {
+    TLorentzVector Vpart1 = getTLorentzVector(part1);
+    TLorentzVector Vpart2 = getTLorentzVector(part2);
+    return (Vpart1.E() > Vpart2.E());
+}
+
+bool LSSAna::greaterE(MCParticle *part1, MCParticle *part2) {
     TLorentzVector Vpart1 = getTLorentzVector(part1);
     TLorentzVector Vpart2 = getTLorentzVector(part2);
     return (Vpart1.E() > Vpart2.E());
@@ -421,6 +469,21 @@ std::vector<ReconstructedParticle*> LSSAna::sortGreaterPT(std::vector<Reconstruc
 std::vector<ReconstructedParticle*> LSSAna::sortGreaterE(std::vector<ReconstructedParticle*> &ivec) {
     const int vsize = ivec.size();
     ReconstructedParticle* temp;
+    for(int i=1; i < vsize; i++) {
+        for(int j = 0; j < vsize - i; j++) {
+            if ( ! greaterE( ivec[j], ivec[j+1] ) ) {
+                temp = ivec[j];
+                ivec[j] = ivec[j+1];
+                ivec[j+1] = temp;
+            }
+        }
+      }
+    return ivec;
+}
+
+std::vector<MCParticle*> LSSAna::sortGreaterE(std::vector<MCParticle*> &ivec) {
+    const int vsize = ivec.size();
+    MCParticle* temp;
     for(int i=1; i < vsize; i++) {
         for(int j = 0; j < vsize - i; j++) {
             if ( ! greaterE( ivec[j], ivec[j+1] ) ) {
