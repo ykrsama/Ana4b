@@ -74,6 +74,8 @@ protected:
     double _h1InvMass2;
     double _deltaR1;
     double _deltaR2;
+    FloatVec _h2DecayLength;
+    //FloatVec _bbMass;
 
     // run time variables
     int pdgid;

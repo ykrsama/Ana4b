@@ -52,6 +52,7 @@ void LSSAna::init() {
     _outputTree_event->Branch("EventNum", &feventNum, "EventNum/I");
     _outputTree_event->Branch("Evisible", &fEvisible);
     _outputTree_event->Branch("Emiss", &fEmiss);
+    _outputTree_event->Branch("Mvisible", &fMass_visible);
     _outputTree_event->Branch("Mll", &fmll);
     _outputTree_event->Branch("Ell", &fEll);
     _outputTree_event->Branch("deltaMllMZ", &fdelta_mll_mz);
@@ -153,8 +154,23 @@ void LSSAna::processEvent( LCEvent *evtP ) {
                         fEvisible += MCP_i->getEnergy();
                         P_sum += MCP_i->getMomentum();
                     }
-                    if ( MCPDG_parent == 9999992 ) {
-                        if (fabs(MCPDG_i) == 5) {
+                    if ( NJetsNum == 2 ) {
+                        // for ee->ZH, H->bb ,find b by check its parents.
+                        if( MCP_parent != nullptr &&
+                            MCP_parent->getParents().size() > 0 && 
+                            MCP_parent->getParents()[0]->getParents().size() > 0 &&
+                            MCP_parent->getParents()[0]->getParents()[0]->getParents().size() == 0 ) {
+                            if (fabs(MCPDG_i) >= 1 && fabs(MCPDG_i) <= 8) {
+                            //if (fabs(MCPDG_i) == 5) {
+                                MCbs[fMCbNum] = MCP_i;
+                                fMCbNum++;
+                            }
+                            if (fabs(MCPDG_i) == 4) fMCcNum++;
+                            if (fabs(MCPDG_i) >= 1 && fabs(MCPDG_i) <= 8) fMCqNum++;
+                        }
+                    } else if ( MCPDG_parent == 9999992 ) {
+                        if (fabs(MCPDG_i) >= 1 && fabs(MCPDG_i) <= 8) {
+                        //if (fabs(MCPDG_i) == 5) {
                             MCbs[fMCbNum] = MCP_i;
                             fMCbNum++;
                         }
@@ -181,11 +197,11 @@ void LSSAna::processEvent( LCEvent *evtP ) {
                     }
                 }
             }
-
-            if ( ! ffound_Zlepton ) {
-                std::cout << "[INFO] Zleptons not found in event " << feventNum << ", skip" << std::endl;
-                return;
-            }
+            if ( fMCbNum < 2 ) return;
+            // if ( ! ffound_Zlepton ) {
+            //     std::cout << "[INFO] Zleptons not found in event " << feventNum << ", skip" << std::endl;
+            //     return;
+            // }
             
             for (int i = 0; i < 2; i++){
                 Vl[i].SetPxPyPzE(   Zleptons[i]->getMomentum()[0],
@@ -230,105 +246,99 @@ void LSSAna::processEvent( LCEvent *evtP ) {
             //================================================================
             // Process Jets
             //-----------------------------------------------------------------
-            if ( NJetsNum == 6 ) {
-                // find Real jets and Lepton jets
-                vAllJets = sortLessDeltaRjl(vAllJets);
-                leptonJets[0] = vAllJets.at(0);
-                leptonJets[1] = vAllJets.at(1);
-                for ( int j = 0; j < 4; j++ ) {
-                    realJets[j] = vAllJets.at(j + 2);
-                }
-            } else if ( NJetsNum == 5 ) {
-                vAllJets = sortLessDeltaRjl(vAllJets);
-                leptonJets[0] = vAllJets.at(0);
-                for ( int j = 0; j < 4; j++ ) {
-                    realJets[j] = vAllJets.at(j + 1);
-                }
-            } else if ( NJetsNum == 4 ) {
-                for ( int j = 0; j < 4; j++ ) {
-                    realJets[j] = vAllJets.at(j);
-                }
+            std::vector<ReconstructedParticle*> vRealJets;
+            if ( NJetsNum >=4 ) {
+                int leptonIndex = NJetsNum - 4;
+                if ( NJetsNum > 4 && ffound_Zlepton )
+                    vAllJets = sortLessDeltaRjl(vAllJets);
+                for ( int j = 0; j < leptonIndex; j++)
+                    leptonJets[j] = vAllJets.at(j);
+                for ( int j = 0; j < 4; j++ )
+                    vRealJets.push_back( vAllJets.at(j + leptonIndex) );
             } else {
-                std::cout << "[INFO] event " << feventNum <<": Jets Number = " << NJetsNum << ", skip" << std::endl;
-                return;
-            }
-
-            std::vector<ReconstructedParticle*> vRealJets(realJets, realJets + 4);
-            // sorted by greater pT
-            vRealJets = sortGreaterE(vRealJets);
+                for ( int j = 0; j < NJetsNum; j++ )
+                    vRealJets.push_back( vAllJets.at(j) );
+            } 
+            // sorted by greater E
             std::vector<TLorentzVector> Vj;
-            for (int i = 0; i < 4; i++) {
+            std::sort(vRealJets.begin(), vRealJets.end(), greaterE);
+            for (int i = 0; i < NJetsNum; i++) {
                 Vj.push_back(getTLorentzVector(vRealJets.at(i)));
                 fPTjet.push_back(Vj.at(i).Pt());
                 fEjet.push_back(Vj.at(i).E());
             }
-            fjet0_pT = Vj.at(0).Pt();
-            fjet1_pT = Vj.at(1).Pt();
-            fjet2_pT = Vj.at(2).Pt();
-            fjet3_pT = Vj.at(3).Pt();
-            fjet0_E = Vj.at(0).E();
-            fjet1_E = Vj.at(1).E();
-            fjet2_E = Vj.at(2).E();
-            fjet3_E = Vj.at(3).E();
-            // sorted by DeltaR
-            vRealJets = arrangeJets( vRealJets );
-            Vj.clear();
-            for (int i = 0; i < 4; i++) {
-                Vj.push_back(getTLorentzVector(vRealJets.at(i)));
-                // get PID
-                const ParticleID &pid_lcfiplus = pidH.getParticleID(vRealJets.at(i), alcfiplus);
-                fbTag = pid_lcfiplus.getParameters()[ibtag];
-                fcTag = pid_lcfiplus.getParameters()[ictag];
-                fCategory = pid_lcfiplus.getParameters()[icategory];
-                flTag = 1 - fbTag - fcTag;
-                // find most likely jet tag
-                ftempTagParam = fbTag;
-                ftempTag = "b";
-                if ( fcTag > ftempTagParam )
-                {
-                    ftempTagParam = fcTag;
-                    ftempTag = "c";
-                }
-                if ( flTag > ftempTagParam )
-                {
-                    ftempTagParam = flTag;
-                    ftempTag = "l";
-                }
-                if (ftempTag == "b") fbTagNum++;
-                fJetTags.push_back(ftempTag);
-
-                // lcfiplus
-                lcfiplus_temp.clear();
-                lcfiplus_temp.push_back(fbTag);
-                lcfiplus_temp.push_back(fcTag);
-                lcfiplus_temp.push_back(fCategory);
-                vlcfiplus.push_back(lcfiplus_temp);
+            if ( NJetsNum >= 4 ) {
+                fjet0_pT = Vj.at(0).Pt();
+                fjet1_pT = Vj.at(1).Pt();
+                fjet2_pT = Vj.at(2).Pt();
+                fjet3_pT = Vj.at(3).Pt();
+                fjet0_E = Vj.at(0).E();
+                fjet1_E = Vj.at(1).E();
+                fjet2_E = Vj.at(2).E();
+                fjet3_E = Vj.at(3).E();
             }
-            // sort vlcfiplus by bTag
-            std::sort(vlcfiplus.begin(), vlcfiplus.end(), greaterBTag);
-            flcfiplus0 = vlcfiplus.at(0);
-            flcfiplus1 = vlcfiplus.at(1);
-            flcfiplus2 = vlcfiplus.at(2);
-            flcfiplus3 = vlcfiplus.at(3);
-
-            Mj00j01 = getMassjj( vRealJets.at(0), vRealJets.at(1) );
-            Mj10j11 = getMassjj( vRealJets.at(2), vRealJets.at(3) );
-            fdeltaMjj = fabs(Mj00j01 - Mj10j11);
-            fDeltaRj00j01 = Vj.at(0).DeltaR(Vj.at(1));
-            fDeltaRj10j11 = Vj.at(2).DeltaR(Vj.at(3));
-            //========================================================
             // For Energy resolution
             //---------------------------------------------------------
-            if ( fMCbNum == 4 ) {
-                std::vector<MCParticle*> vMCbs(MCbs, MCbs + 4);
-                std::vector<TLorentzVector> VecB;
-                vMCbs = sortGreaterE(vMCbs);
-                for (int i = 0; i < 4; i++) {
+            if ( fMCbNum == 4 || fMCbNum == 2) {
+                std::vector<MCParticle*> vMCbs(MCbs, MCbs + fMCbNum);
+                std::vector<TLorentzVector> VecB; // TLorentzVector of vMCbs
+                std::sort(vMCbs.begin(), vMCbs.end(), greaterE);
+                for (int i = 0; i < fMCbNum; i++)
                     VecB.push_back(getTLorentzVector(vMCbs.at(i)));
+                //VecB = arrangeMCbByEBJ(VecB, Vj);
+                for (int i = 0; i < fMCbNum; i++) {
                     fEb.push_back(VecB.at(i).E());
                     fDeltaRBJ.push_back(Vj.at(i).DeltaR(VecB.at(i)));
                     fEBJ.push_back(VecB.at(i).E() - Vj.at(i).E());
                 }
+            }
+            if (NJetsNum >= 4 ) {
+                // sorted by DeltaR
+                vRealJets = arrangeJets( vRealJets );
+                Vj.clear();
+                for (int i = 0; i < 4; i++) {
+                    Vj.push_back(getTLorentzVector(vRealJets.at(i)));
+                    // get PID
+                    const ParticleID &pid_lcfiplus = pidH.getParticleID(vRealJets.at(i), alcfiplus);
+                    fbTag = pid_lcfiplus.getParameters()[ibtag];
+                    fcTag = pid_lcfiplus.getParameters()[ictag];
+                    fCategory = pid_lcfiplus.getParameters()[icategory];
+                    flTag = 1 - fbTag - fcTag;
+                    // find most likely jet tag
+                    ftempTagParam = fbTag;
+                    ftempTag = "b";
+                    if ( fcTag > ftempTagParam )
+                    {
+                        ftempTagParam = fcTag;
+                        ftempTag = "c";
+                    }
+                    if ( flTag > ftempTagParam )
+                    {
+                        ftempTagParam = flTag;
+                        ftempTag = "l";
+                    }
+                    if (ftempTag == "b") fbTagNum++;
+                    fJetTags.push_back(ftempTag);
+
+                    // lcfiplus
+                    lcfiplus_temp.clear();
+                    lcfiplus_temp.push_back(fbTag);
+                    lcfiplus_temp.push_back(fcTag);
+                    lcfiplus_temp.push_back(fCategory);
+                    vlcfiplus.push_back(lcfiplus_temp);
+                }
+                // sort vlcfiplus by bTag
+                std::sort(vlcfiplus.begin(), vlcfiplus.end(), greaterBTag);
+                flcfiplus0 = vlcfiplus.at(0);
+                flcfiplus1 = vlcfiplus.at(1);
+                flcfiplus2 = vlcfiplus.at(2);
+                flcfiplus3 = vlcfiplus.at(3);
+
+                Mj00j01 = getMassjj( vRealJets.at(0), vRealJets.at(1) );
+                Mj10j11 = getMassjj( vRealJets.at(2), vRealJets.at(3) );
+                fdeltaMjj = fabs(Mj00j01 - Mj10j11);
+                fDeltaRj00j01 = Vj.at(0).DeltaR(Vj.at(1));
+                fDeltaRj10j11 = Vj.at(2).DeltaR(Vj.at(3));
             }
         } catch (lcio::DataNotAvailableException err) {}
         //_outputTree_truth->Fill();
@@ -418,23 +428,23 @@ bool LSSAna::lessDeltaRjl(MCParticle *part1, ReconstructedParticle *part2) {
     return ( DeltaRlj1 < DeltaRlj2 );
 }
 
-bool LSSAna::greaterPT(ReconstructedParticle *part1, ReconstructedParticle *part2) {
-    TLorentzVector Vpart1 = getTLorentzVector(part1);
-    TLorentzVector Vpart2 = getTLorentzVector(part2);
-    return (Vpart1.Pt() > Vpart2.Pt());
-}
+// bool LSSAna::greaterPT(ReconstructedParticle *part1, ReconstructedParticle *part2) {
+//     TLorentzVector Vpart1 = getTLorentzVector(part1);
+//     TLorentzVector Vpart2 = getTLorentzVector(part2);
+//     return (Vpart1.Pt() > Vpart2.Pt());
+// }
 
-bool LSSAna::greaterE(ReconstructedParticle *part1, ReconstructedParticle *part2) {
-    TLorentzVector Vpart1 = getTLorentzVector(part1);
-    TLorentzVector Vpart2 = getTLorentzVector(part2);
-    return (Vpart1.E() > Vpart2.E());
-}
+// bool LSSAna::greaterE(ReconstructedParticle *part1, ReconstructedParticle *part2) {
+//     TLorentzVector Vpart1 = getTLorentzVector(part1);
+//     TLorentzVector Vpart2 = getTLorentzVector(part2);
+//     return (Vpart1.E() > Vpart2.E());
+// }
 
-bool LSSAna::greaterE(MCParticle *part1, MCParticle *part2) {
-    TLorentzVector Vpart1 = getTLorentzVector(part1);
-    TLorentzVector Vpart2 = getTLorentzVector(part2);
-    return (Vpart1.E() > Vpart2.E());
-}
+// bool LSSAna::greaterE(MCParticle *part1, MCParticle *part2) {
+//     TLorentzVector Vpart1 = getTLorentzVector(part1);
+//     TLorentzVector Vpart2 = getTLorentzVector(part2);
+//     return (Vpart1.E() > Vpart2.E());
+// }
 
 std::vector<ReconstructedParticle*> LSSAna::sortLessDeltaRjl(std::vector<ReconstructedParticle*> &ivec) {
     const int vsize = ivec.size();
@@ -451,48 +461,48 @@ std::vector<ReconstructedParticle*> LSSAna::sortLessDeltaRjl(std::vector<Reconst
     return ivec;
 }
 
-std::vector<ReconstructedParticle*> LSSAna::sortGreaterPT(std::vector<ReconstructedParticle*> &ivec) {
-    const int vsize = ivec.size();
-    ReconstructedParticle* temp;
-    for(int i=1; i < vsize; i++) {
-        for(int j = 0; j < vsize - i; j++) {
-            if ( ! greaterPT( ivec[j], ivec[j+1] ) ) {
-                temp = ivec[j];
-                ivec[j] = ivec[j+1];
-                ivec[j+1] = temp;
-            }
-        }
-      }
-    return ivec;
-}
-
-std::vector<ReconstructedParticle*> LSSAna::sortGreaterE(std::vector<ReconstructedParticle*> &ivec) {
-    const int vsize = ivec.size();
-    ReconstructedParticle* temp;
-    for(int i=1; i < vsize; i++) {
-        for(int j = 0; j < vsize - i; j++) {
-            if ( ! greaterE( ivec[j], ivec[j+1] ) ) {
-                temp = ivec[j];
-                ivec[j] = ivec[j+1];
-                ivec[j+1] = temp;
-            }
-        }
-      }
-    return ivec;
-}
-
-std::vector<MCParticle*> LSSAna::sortGreaterE(std::vector<MCParticle*> &ivec) {
+MCParticle* LSSAna::getCloserMCP(ReconstructedParticle *part1, std::vector<MCParticle*> &ivec) {
+    TLorentzVector Vpart1 = getTLorentzVector(part1);
     const int vsize = ivec.size();
     MCParticle* temp;
-    for(int i=1; i < vsize; i++) {
-        for(int j = 0; j < vsize - i; j++) {
-            if ( ! greaterE( ivec[j], ivec[j+1] ) ) {
-                temp = ivec[j];
-                ivec[j] = ivec[j+1];
-                ivec[j+1] = temp;
-            }
+    temp = ivec[0];
+    for (int i = 1; i < vsize; i++) {
+        TLorentzVector Vtemp = getTLorentzVector(temp);
+        TLorentzVector Viveci = getTLorentzVector(ivec[i]);
+        if ( Viveci.DeltaR(Vpart1) < Vtemp.DeltaR(Vpart1) ) {
+            temp = ivec[i];
         }
-      }
+    }
+    return temp;
+}
+
+std::vector<TLorentzVector> LSSAna::arrangeMCbByEBJ(std::vector<TLorentzVector> &vecMCb, std::vector<TLorentzVector> &vecJet) {
+    const int vsize = vecMCb.size();
+    std::vector<TLorentzVector> ivec;
+    float EBJ;
+    float sd2;
+    float sd2_temp;
+    // for permutation
+    std::vector<int> index;
+    for (int i = 0; i < vsize; i++) index.push_back(i);
+    // calculate standard deviation of EBJ
+    sd2 = -1;
+    do {
+        // get standard deviation
+        sd2_temp = 0;
+        for ( int i = 0; i < vsize; i++) {
+            EBJ = vecMCb.at( index.at(i) ).E() - vecJet.at( index.at(i) ).E();
+            sd2_temp += EBJ * EBJ;
+        }
+        // add ivec
+        if ( sd2_temp < sd2 || sd2 < 0 ) {
+            sd2 = sd2_temp;
+            ivec.clear();
+            for ( int i = 0; i < vsize; i++ )
+                ivec.push_back( vecMCb.at( index.at(i) ) );
+        }
+    } while ( std::next_permutation( index.begin(), index.end() ) );
+    
     return ivec;
 }
 

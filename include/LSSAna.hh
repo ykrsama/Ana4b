@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <math.h>
+#include <algorithm>
 
 #include "marlin/Processor.h"
 #include "LCIOSTLTypes.h"
@@ -55,27 +56,28 @@ private:
 
     bool lessDeltaRjl(MCParticle *part1, ReconstructedParticle *part2);
 
-    bool greaterPT(ReconstructedParticle *part1, ReconstructedParticle *part2);
-
-    bool greaterE(ReconstructedParticle *part1, ReconstructedParticle *part2);
-
-    bool greaterE(MCParticle* part1, MCParticle *part2);
-
     std::vector<ReconstructedParticle*> sortLessDeltaRjl(std::vector<ReconstructedParticle*> &ivec);
     
-    std::vector<ReconstructedParticle*> sortGreaterPT(std::vector<ReconstructedParticle*> &ivec);
-
-    std::vector<ReconstructedParticle*> sortGreaterE(std::vector<ReconstructedParticle*> &ivec);
-
-    std::vector<MCParticle*> sortGreaterE(std::vector<MCParticle*> &ivec);
-
     std::vector<ReconstructedParticle*> arrangeJets(std::vector<ReconstructedParticle*> &ivec);
+
+    std::vector<TLorentzVector> arrangeMCbByEBJ(std::vector<TLorentzVector> &vecMCb, std::vector<TLorentzVector> &vecJet);
+
+    MCParticle* getCloserMCP(ReconstructedParticle *part1, std::vector<MCParticle*> &ivec);
 
     struct {
         bool operator()(const DoubleVec lcfi1, const DoubleVec lcfi2) {
             return ( lcfi1.at(0) > lcfi2.at(0) );
         };
     } greaterBTag;
+
+    struct {
+        bool operator()(const ReconstructedParticle *part1, const ReconstructedParticle *part2) {
+            return ( part1->getEnergy() > part2->getEnergy() );
+        };
+        bool operator()(const MCParticle *part1, const MCParticle *part2) {
+            return ( part1->getEnergy() > part2->getEnergy() );
+        };
+    } greaterE;
 
 private:
     // ROOT related
@@ -178,7 +180,7 @@ private:
     DoubleVec lcfiplus_temp;
     std::string ftempTag;
     ReconstructedParticle* leptonJets[2];
-    ReconstructedParticle* realJets[4];
+    //ReconstructedParticle* realJets[4];
     MCParticle* MCbs[4];
     std::vector<DoubleVec> vlcfiplus;
 
