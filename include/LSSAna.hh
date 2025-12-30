@@ -138,6 +138,9 @@ private:
     DoubleVec flcfiplus2;
     DoubleVec flcfiplus3;
 
+    // genjet
+    DoubleVec fGenJets_E;
+
     bool ffound_Zlepton;
 
     // jet

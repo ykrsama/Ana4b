@@ -1,7 +1,6 @@
 #include "Truth4b.hh"
 #include "EVENT/LCCollection.h"
 #include "EVENT/LCParameters.h"
-#include "EVENT/MCParticle.h"
 //#include "UTIL/PIDHandler.h"
 #include <math.h>
 
@@ -83,6 +82,7 @@ void Truth4b::init() {
     _outputTree->Branch("deltaR1", &_deltaR1, "deltaR1/D");
     _outputTree->Branch("deltaR2", &_deltaR2, "deltaR2/D");
     _outputTree->Branch("h2DecayLength", &_h2DecayLength);
+    _outputTree->Branch("vh1DecayLength", &_vh1DecayLength);
 
 }
 
@@ -97,6 +97,9 @@ void Truth4b::processEvent( LCEvent *evtP ) {
             h2Pz = 0;
             bcount = 0;
             h1count = 0;
+            h2count = 0;
+            _h2DecayLength = 0;
+            _vh1DecayLength.clear();
 
             // Get Collection
             LCCollection* col = evtP->getCollection(_colName);
@@ -106,10 +109,16 @@ void Truth4b::processEvent( LCEvent *evtP ) {
             for (int i = 0; i < partNum; i++ ) {
                 MCParticle* simP = dynamic_cast<MCParticle*>(col->getElementAt(i));
                 pdgid = simP->getPDG();
-                if ( h1count == 2 ) break;
-                if ( pdgid == 9999992 ) {
+                if ( pdgid == 9999993) { // h2
+                    h2count++;
+                    _h2DecayLength = getDecayLength(simP);
+                    
+                } else if ( pdgid == 9999992 ) { //h1
                     // scan h1
                     h1count++;
+                    // get decay length
+                    _vh1DecayLength.push_back( getDecayLength(simP) );
+                    // scan daughters
                     MCParticleVec h1Daughters = simP->getDaughters();
                     // init vars
                     _h1E1 = 0;
@@ -198,6 +207,7 @@ void Truth4b::processEvent( LCEvent *evtP ) {
                             break;
                     }
                 }
+                if ( h1count == 2 && h2count == 1 ) break;
             }
             
             // Calcuate
@@ -222,4 +232,14 @@ void Truth4b::end() {
     }
 
     delete tree_file;
+}
+
+double Truth4b::getDecayLength( MCParticle* part ) {
+    double delta;
+    double length2 = 0;
+    for (int i = 0; i < 3; i++) {
+        delta = part->getEndpoint()[i] - part->getVertex()[i];
+        length2 += delta * delta;
+    }
+    return sqrt(length2);
 }

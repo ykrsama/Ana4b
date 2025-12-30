@@ -12,6 +12,7 @@
 #include "TTree.h"
 #include "TFile.h"
 #include "TLorentzVector.h"
+#include "EVENT/MCParticle.h"
 
 
 class TTree;
@@ -32,6 +33,7 @@ public:
 
     void end();
 
+    double getDecayLength( MCParticle* part );
 
 protected:
     // ROOT related
@@ -74,7 +76,8 @@ protected:
     double _h1InvMass2;
     double _deltaR1;
     double _deltaR2;
-    FloatVec _h2DecayLength;
+    double _h2DecayLength;
+    std::vector<double> _vh1DecayLength;
     //FloatVec _bbMass;
 
     // run time variables
@@ -82,6 +85,7 @@ protected:
     int partNum;
     int bcount;
     int h1count;
+    int h2count;
     float recoEff;
     int totalRec4b;
     float h2Px;
